@@ -82,16 +82,52 @@ chmod 755 logs
 echo "✓ 로그 디렉토리 생성 완료"
 echo ""
 
+# 메모리 기반 빌드 전략 선택
+MEMORY_MB=$(free -m | awk 'NR==2{printf "%.0f", $2}')
+echo "[메모리 기반 배포 전략 선택]"
+echo "사용 가능한 메모리: ${MEMORY_MB}MB"
+
+if [ "$MEMORY_MB" -lt 1500 ]; then
+    echo "⚠️ 메모리가 부족합니다 (${MEMORY_MB}MB < 1500MB)"
+    echo "대안 빌드 스크립트를 실행합니다..."
+    chmod +x build-alternative.sh
+    ./build-alternative.sh
+    exit $?
+elif [ "$MEMORY_MB" -lt 3000 ]; then
+    echo "🔄 저사양 최적화 모드로 빌드합니다..."
+    COMPOSE_FILE="docker-compose.lowmem.yml"
+    if [ ! -f "$COMPOSE_FILE" ]; then
+        # 저사양 compose 파일이 없으면 생성
+        sed 's/dockerfile: Dockerfile/dockerfile: Dockerfile.lowmem/' docker-compose.yml > docker-compose.lowmem.yml
+    fi
+else
+    echo "🚀 표준 모드로 빌드합니다..."
+    COMPOSE_FILE="docker-compose.yml"
+fi
+
 # Docker 이미지 빌드 및 실행
-echo "[애플리케이션 배포]"
+echo "[애플리케이션 배포 - $COMPOSE_FILE 사용]"
 echo "Docker 이미지 빌드를 시작합니다... (시간이 오래 걸릴 수 있습니다)"
 
-if docker-compose up --build -d; then
+if docker-compose -f "$COMPOSE_FILE" up --build -d; then
     echo "✓ 애플리케이션 빌드 및 실행 성공"
 else
     echo "❌ 애플리케이션 실행 실패"
-    echo "로그를 확인하세요:"
-    docker-compose logs
+    echo ""
+    echo "빌드 로그를 확인합니다..."
+    docker-compose -f "$COMPOSE_FILE" logs
+    
+    echo ""
+    echo "🔧 문제 해결 옵션:"
+    echo "1. 메모리 부족인 경우: 대안 빌드 스크립트 실행"
+    echo "   ./build-alternative.sh"
+    echo ""
+    echo "2. EC2 인스턴스 업그레이드 (t3.medium 이상 권장)"
+    echo ""
+    echo "3. 스왑 파일 생성으로 가상 메모리 증가"
+    echo "   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile"
+    echo "   sudo mkswap /swapfile && sudo swapon /swapfile"
+    
     exit 1
 fi
 echo ""

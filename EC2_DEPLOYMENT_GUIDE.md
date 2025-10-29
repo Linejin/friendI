@@ -87,25 +87,58 @@ docker stats
 # - Type: HTTPS, Port: 443, Source: 0.0.0.0/0 (선택적)
 ```
 
-### 5. 빌드 실패
+### 5. Gradle 빌드 실패 (가장 흔한 문제)
+
+#### 5-1. 메모리 부족으로 인한 빌드 실패
 ```bash
-# 문제: Gradle 빌드 실패
-# 확인:
-docker-compose logs backend
+# 증상: ERROR [backend build] RUN ./gradlew clean build
+# 원인: EC2 t3.micro/t3.small의 제한된 메모리
 
-# 해결 방법들:
-# 1. 디스크 공간 확인
-df -h
-
-# 2. 메모리 확인 및 스왑 설정
+# 해결책 1: 스왑 파일 생성
 sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
+sudo chmod 600 /swapfile  
 sudo mkswap /swapfile
 sudo swapon /swapfile
+echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab
 
-# 3. 빌드 타임아웃 증가 (docker-compose.yml)
-GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx1g"
+# 해결책 2: 대안 빌드 스크립트 사용
+chmod +x build-alternative.sh
+./build-alternative.sh
+
+# 해결책 3: 저사양 최적화 모드
+docker-compose -f docker-compose.lowmem.yml up --build -d
 ```
+
+#### 5-2. 네트워크 타임아웃
+```bash
+# 증상: Connection timeout, Could not download dependencies
+# 해결: DNS 및 네트워크 설정
+
+# DNS 설정 확인
+echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+
+# Docker 재시작
+sudo systemctl restart docker
+```
+
+#### 5-3. 디스크 공간 부족
+```bash
+# 확인
+df -h
+
+# 정리
+sudo docker system prune -af
+sudo apt-get autoremove -y
+sudo apt-get autoclean
+```
+
+#### 5-4. 인스턴스 타입별 권장사항
+| 인스턴스 | 메모리 | 권장 방법 | 예상 빌드 시간 |
+|----------|--------|-----------|----------------|
+| t3.micro | 1GB | 대안 빌드 스크립트 | 5-10분 |
+| t3.small | 2GB | 저사양 최적화 + 스왑 | 10-15분 |
+| t3.medium | 4GB | 표준 빌드 | 5-8분 |
+| t3.large | 8GB+ | 표준 빌드 | 3-5분 |
 
 ## 🔍 모니터링 및 로그
 

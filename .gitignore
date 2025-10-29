@@ -1,0 +1,110 @@
+# ====================================
+#       FriendlyI 프로젝트 루트 .gitignore
+#       전체 프로젝트 공통 제외 파일들
+# ====================================
+
+# 🔐 환경 변수 및 민감정보
+.env
+.env.local
+.env.*.local
+
+# ⚠️ 민감정보 포함 가능성이 있는 환경 파일들
+# 주의: .env.development, .env.production은 민감정보 제거 후에만 커밋
+.env.*.secret
+*.secret
+secrets/
+config/local/
+config/secret/
+
+# 🐳 Docker 로컬 설정
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.*.local.yml
+.dockerenv
+
+# 📁 데이터 및 업로드 파일
+data/
+uploads/
+files/
+storage/
+media/
+
+# 📝 로그 파일
+logs/
+*.log
+log/
+*.log.*
+
+# 🔒 보안 인증서 및 키
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+*.crt
+*.pfx
+ssh_keys/
+
+# 💻 OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 🛠 IDE 및 에디터 설정
+.vscode/settings.json
+.vscode/launch.json
+.vscode/.ropeproject
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# 🗑 임시 및 백업 파일
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*_backup.*
+*_old.*
+*_backup/
+*_old/
+
+# 📊 분석 및 리포트
+coverage/
+.nyc_output/
+reports/
+*.coverage
+.pytest_cache/
+
+# 🔧 로컬 설정 및 캐시
+local/
+cache/
+.cache/
+node_modules/
+
+# 📦 패키지 매니저 캐시
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+.pnpm-debug.log*
+
+# 🚀 배포 관련
+dist/
+build/
+*.zip
+*.tar.gz
+*.rar

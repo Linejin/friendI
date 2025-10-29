@@ -1,0 +1,160 @@
+# ====================================
+#       Backend (Spring Boot + Java)
+#       백엔드 전용 .gitignore
+# ====================================
+
+# 📖 Documentation
+HELP.md
+README.md.bak
+
+# 🏗 Gradle Build Files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!**/src/main/**/build/
+!**/src/test/**/build/
+gradle-app.setting
+
+# ☕ Java Compiled Files
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+
+# 🛠 IDE Specific Files
+### Spring Tool Suite ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### Eclipse ###
+.metadata
+.recommenders/
+RemoteSystemsTempFiles/
+
+### VS Code ###
+.vscode/
+*.code-workspace
+
+# 🔐 Environment & Configuration
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-secret.properties
+application-*.local.properties
+bootstrap-local.yml
+bootstrap-secret.yml
+
+# 🗄 Database Files
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+data/
+h2-data/
+database/
+db-data/
+
+# 📝 Logs & Monitoring
+logs/
+log/
+*.log
+*.log.*
+spring.log*
+application.log*
+
+# 🔄 JVM & Runtime
+hs_err_pid*
+replay_pid*
+
+# 🔒 Security & Certificates
+*.p12
+*.jks
+*.keystore
+*.pem
+*.crt
+*.key
+*.pfx
+keystore/
+truststore/
+
+# 📁 File Uploads & Storage
+uploads/
+files/
+attachments/
+media/
+static-files/
+
+# 🗑 Temporary & Cache Files
+temp/
+tmp/
+*.tmp
+*.temp
+cache/
+.cache/
+
+# 🧪 Testing & Reports
+TEST-*.xml
+test-output/
+test-results/
+target/
+jacoco.exec
+*.exec
+.sonar/
+sonar-project.properties
+
+# 📊 Profiling & Performance
+*.hprof
+*.prof
+profiler/
+
+# 🚀 Spring Boot Specific
+BOOT-INF/
+META-INF/
+spring-boot-devtools.properties
+.reloadtrigger
+
+# 🐳 Container & Deployment
+.dockerenv
+Dockerfile.local
+docker-compose.override.yml
+
+# 📦 Maven (if used alongside Gradle)
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# 🔧 Custom Application Files
+config/local/
+config/secret/
+secrets/
+local-config/

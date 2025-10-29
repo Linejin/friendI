@@ -1,0 +1,36 @@
+# Docker Compose Override for Local Development
+# This file should NOT be committed to git
+# Copy docker-compose.override.yml.example to docker-compose.override.yml
+
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      # Local development environment variables
+      - SPRING_PROFILES_ACTIVE=dev,local
+      - DB_URL=jdbc:h2:file:./data/friendlyi-local
+      - JWT_SECRET=local_development_jwt_secret_very_long_key
+      - ADMIN_PASSWORD=localdev123
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # Debug port
+    volumes:
+      - ./backend/backend/logs:/app/logs
+      - ./backend/backend/data:/app/data
+    command: >
+      java -jar 
+      -Xmx512m 
+      -Xms256m 
+      -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      /app/app.jar
+
+  frontend:
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8080/api
+      - REACT_APP_ENABLE_DEBUG=true
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/nginx-local.conf:/etc/nginx/nginx.conf:ro

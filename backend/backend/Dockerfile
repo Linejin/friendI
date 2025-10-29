@@ -18,8 +18,8 @@ COPY gradle.properties* ./
 COPY build.gradle ./
 COPY settings.gradle ./
 
-# Make gradlew executable
-RUN chmod +x ./gradlew
+# Make gradlew executable and verify
+RUN chmod +x ./gradlew && ls -la ./gradlew
 
 # 의존성 다운로드 (소스코드 변경과 분리)
 RUN ./gradlew dependencies --no-daemon || true

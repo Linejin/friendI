@@ -45,6 +45,12 @@ if command -v java &> /dev/null; then
     if [ "$JAVA_VERSION" -ge "11" ]; then
         echo "호스트에서 Gradle 빌드를 시도합니다..."
         
+        # Gradle wrapper 실행 권한 확인 및 부여
+        if [ ! -x "./gradlew" ]; then
+            echo "Gradle wrapper에 실행 권한을 부여합니다..."
+            chmod +x ./gradlew
+        fi
+        
         # 메모리 제한된 환경에서 빌드
         export GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g -XX:+UseSerialGC"
         
@@ -119,7 +125,8 @@ COPY gradle.properties ./
 COPY build.gradle ./
 COPY settings.gradle ./
 
-RUN chmod +x ./gradlew
+# Make gradlew executable with verification
+RUN chmod +x ./gradlew && ls -la ./gradlew
 
 # 의존성을 먼저 해결 (실패해도 계속)
 RUN timeout 300 ./gradlew dependencies --no-daemon || echo "Dependencies partially downloaded"

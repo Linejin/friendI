@@ -7,6 +7,22 @@ echo "    FriendlyI EC2 Linux 배포 시작"
 echo "=========================================="
 echo ""
 
+# Gradle wrapper 권한 확인 및 수정
+echo "[Gradle Wrapper 권한 확인]"
+if [ -f "backend/backend/gradlew" ]; then
+    if [ ! -x "backend/backend/gradlew" ]; then
+        echo "⚠️ Gradle wrapper에 실행 권한이 없습니다. 권한을 부여합니다..."
+        chmod +x backend/backend/gradlew
+        echo "✓ 실행 권한 부여 완료"
+    else
+        echo "✓ Gradle wrapper 실행 권한 확인 완료"
+    fi
+else
+    echo "❌ backend/backend/gradlew 파일을 찾을 수 없습니다."
+    exit 1
+fi
+echo ""
+
 # 시스템 정보 확인
 echo "[시스템 정보 확인]"
 echo "OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"

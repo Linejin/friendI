@@ -1,0 +1,50 @@
+# Git attributes for FriendlyI project
+# 파일별 Git 처리 방식 정의
+
+# Gradle wrapper는 항상 실행 권한 유지
+**/gradlew text eol=lf
+backend/backend/gradlew eol=lf
+
+# Shell 스크립트들은 LF 라인 엔딩 사용
+*.sh text eol=lf
+
+# 배치 파일은 CRLF 라인 엔딩 사용  
+*.bat text eol=crlf
+
+# 바이너리 파일들
+*.jar binary
+*.war binary
+*.zip binary
+*.tar.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# 텍스트 파일들은 자동 라인 엔딩 변환
+*.md text
+*.txt text
+*.json text
+*.xml text
+*.yml text
+*.yaml text
+*.properties text
+
+# 소스코드 파일들
+*.java text
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.css text
+*.scss text
+*.html text
+
+# Docker 관련
+Dockerfile* text eol=lf
+docker-compose*.yml text eol=lf
+
+# Git 관련
+.gitignore text
+.gitattributes text

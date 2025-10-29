@@ -45,6 +45,25 @@ if command -v java &> /dev/null; then
     if [ "$JAVA_VERSION" -ge "11" ]; then
         echo "호스트에서 Gradle 빌드를 시도합니다..."
         
+        # Gradle wrapper JAR 파일 확인
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "❌ gradle-wrapper.jar 파일이 없습니다."
+            echo "Gradle Wrapper를 복구합니다..."
+            
+            mkdir -p gradle/wrapper
+            GRADLE_VERSION="8.10.2"
+            WRAPPER_URL="https://github.com/gradle/gradle/raw/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar"
+            
+            if curl -L -o gradle/wrapper/gradle-wrapper.jar "$WRAPPER_URL" 2>/dev/null; then
+                echo "✓ gradle-wrapper.jar 다운로드 완료"
+            else
+                echo "❌ gradle-wrapper.jar 다운로드 실패"
+                echo "fix-gradle-wrapper.sh 스크립트를 실행하세요."
+                cd ../..
+                exit 1
+            fi
+        fi
+        
         # Gradle wrapper 실행 권한 확인 및 부여
         if [ ! -x "./gradlew" ]; then
             echo "Gradle wrapper에 실행 권한을 부여합니다..."

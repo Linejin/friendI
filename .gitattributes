@@ -22,6 +22,9 @@ backend/backend/gradlew eol=lf
 *.gif binary
 *.ico binary
 
+# Gradle wrapper JAR은 반드시 바이너리로 추적
+**/gradle/wrapper/gradle-wrapper.jar binary
+
 # 텍스트 파일들은 자동 라인 엔딩 변환
 *.md text
 *.txt text

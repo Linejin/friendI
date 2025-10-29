@@ -1,11 +1,8 @@
-# Backend Dockerfile
-FROM openjdk:21-jdk-slim AS build
+# Backend Dockerfile - Linux 배포 최적화
+FROM eclipse-temurin:21-jdk-alpine AS build
 
-# Install required packages
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+# Install required packages (Alpine Linux)
+RUN apk add --no-cache curl unzip
 
 # Set working directory
 WORKDIR /app
@@ -25,14 +22,14 @@ COPY src/ ./src/
 # Build the application
 RUN ./gradlew clean build -x test --no-daemon
 
-# Production stage
-FROM openjdk:21-jre-slim
+# Production stage - 안정적인 JRE 이미지 사용
+FROM eclipse-temurin:21-jre-alpine
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install curl for health checks (Alpine Linux)
+RUN apk add --no-cache curl
 
-# Create app user
-RUN groupadd -r app && useradd -r -g app app
+# Create app user (Alpine Linux 방식)
+RUN addgroup -g 1000 app && adduser -D -u 1000 -G app app
 
 # Set working directory
 WORKDIR /app

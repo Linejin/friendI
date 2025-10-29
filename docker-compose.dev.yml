@@ -1,4 +1,5 @@
-version: '3.8'
+# Docker Compose for FriendlyI Development
+# Optimized for Linux development environment
 
 services:
   # Backend Service (Development)

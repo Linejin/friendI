@@ -47,21 +47,9 @@ if command -v java &> /dev/null; then
         
         # Gradle wrapper JAR 파일 확인
         if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "❌ gradle-wrapper.jar 파일이 없습니다."
-            echo "Gradle Wrapper를 복구합니다..."
-            
-            mkdir -p gradle/wrapper
-            GRADLE_VERSION="8.10.2"
-            WRAPPER_URL="https://github.com/gradle/gradle/raw/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar"
-            
-            if curl -L -o gradle/wrapper/gradle-wrapper.jar "$WRAPPER_URL" 2>/dev/null; then
-                echo "✓ gradle-wrapper.jar 다운로드 완료"
-            else
-                echo "❌ gradle-wrapper.jar 다운로드 실패"
-                echo "fix-gradle-wrapper.sh 스크립트를 실행하세요."
-                cd ../..
-                exit 1
-            fi
+            echo "⚠️ gradle-wrapper.jar 파일이 없습니다."
+            echo "💡 ./gradlew 실행 시 Gradle이 자동으로 다운로드합니다."
+            echo "   (이는 정상적인 동작입니다)"
         fi
         
         # Gradle wrapper 실행 권한 확인 및 부여

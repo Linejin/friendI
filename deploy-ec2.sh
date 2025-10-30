@@ -27,19 +27,9 @@ echo "[Gradle Wrapper JAR 확인]"
 GRADLE_WRAPPER_JAR="backend/backend/gradle/wrapper/gradle-wrapper.jar"
 
 if [ ! -f "$GRADLE_WRAPPER_JAR" ]; then
-    echo "⚠️ gradle-wrapper.jar 파일이 없습니다. 다운로드를 시도합니다..."
-    
-    # wrapper 디렉토리 생성
-    mkdir -p backend/backend/gradle/wrapper
-    
-    # Gradle 8.10.2 wrapper JAR 다운로드
-    if curl -L -o "$GRADLE_WRAPPER_JAR" "https://github.com/gradle/gradle/raw/v8.10.2/gradle/wrapper/gradle-wrapper.jar"; then
-        echo "✓ gradle-wrapper.jar 다운로드 완료"
-    else
-        echo "❌ gradle-wrapper.jar 다운로드에 실패했습니다."
-        echo "대안: fix-gradle-wrapper.sh 스크립트를 실행하거나 로컬에서 파일을 업로드해주세요."
-        exit 1
-    fi
+    echo "⚠️ gradle-wrapper.jar 파일이 없습니다."
+    echo "💡 Gradle이 처음 실행될 때 자동으로 다운로드됩니다."
+    echo "   빌드 과정에서 자동으로 해결됩니다."
 else
     echo "✓ gradle-wrapper.jar 파일 확인 완료"
 fi

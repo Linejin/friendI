@@ -29,7 +29,7 @@ ENV SKIP_PREFLIGHT_CHECK=$SKIP_PREFLIGHT_CHECK
 ENV GENERATE_SOURCEMAP=$GENERATE_SOURCEMAP
 
 # Build the application with error tolerance
-RUN npm run build:safe
+RUN npm run build || npm run build:safe || npm run build:prod
 
 # Production stage
 FROM nginx:alpine

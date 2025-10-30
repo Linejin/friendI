@@ -56,18 +56,43 @@ Thumbs.db
 desktop.ini
 
 # 🛠 IDE 및 에디터 설정
-.vscode/settings.json
-.vscode/launch.json
-.vscode/.ropeproject
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries/
-.idea/shelf/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Eclipse
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders/
+.project
+.pydevproject
+
+# Other editors
 *.swp
 *.swo
 *~
-.project
-.pydevproject
 
 # 🗑 임시 및 백업 파일
 tmp/

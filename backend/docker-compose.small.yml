@@ -1,0 +1,202 @@
+version: '3.8'
+
+# EC2 Small Instance Optimized Configuration (2GB RAM, 2 vCPU)
+services:
+  # Database Service (Resource Optimized)
+  postgres:
+    image: postgres:15-alpine  # Alpine for smaller size
+    container_name: friendly-i-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: friendlyi
+      POSTGRES_USER: friendlyi_user
+      POSTGRES_PASSWORD: friendlyi_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      # PostgreSQL optimization for small instance
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 512MB
+      POSTGRES_MAX_CONNECTIONS: 50
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=256MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=4MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=2MB
+      -c min_wal_size=1GB
+      -c max_wal_size=2GB
+      -c max_connections=50
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - friendly-i-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friendlyi_user -d friendlyi"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Redis Service (Lightweight)
+  redis:
+    image: redis:7-alpine
+    container_name: friendly-i-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass redis_password
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - friendly-i-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+
+  # Backend Application (Memory Optimized)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: friendly-i-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+      
+      # Server Configuration (Optimized)
+      SERVER_PORT: 8080
+      SERVER_TOMCAT_MAX_THREADS: 50
+      SERVER_TOMCAT_MIN_SPARE_THREADS: 5
+      SERVER_TOMCAT_MAX_CONNECTIONS: 2000
+      
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: friendlyi
+      DB_USERNAME: friendlyi_user
+      DB_PASSWORD: friendlyi_password
+      
+      # Connection Pool (Reduced for small instance)
+      HIKARI_MAXIMUM_POOL_SIZE: 10
+      HIKARI_MINIMUM_IDLE: 2
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis_password
+      
+      # JWT Configuration
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production-minimum-32-chars
+      JWT_EXPIRATION: 86400000
+      JWT_REFRESH_EXPIRATION: 604800000
+      
+      # File Upload Configuration
+      FILE_UPLOAD_PATH: /app/uploads
+      FILE_UPLOAD_MAX_SIZE: 5MB
+      FILE_UPLOAD_MAX_REQUEST_SIZE: 10MB
+      
+      # JVM Options (EC2 Small Optimized)
+      JAVA_OPTS: >-
+        -server
+        -Xms128m
+        -Xmx448m
+        -XX:+UseSerialGC
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=70.0
+        -XX:+TieredCompilation
+        -XX:TieredStopAtLevel=1
+        -Djava.awt.headless=true
+        -Djava.security.egd=file:/dev/./urandom
+        -Dspring.backgroundpreinitializer.ignore=true
+        -Dspring.jmx.enabled=false
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    ports:
+      - "8080:8080"
+    networks:
+      - friendly-i-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 180s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+# Volumes (Local for cost efficiency)
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
+
+# Networks
+networks:
+  friendly-i-network:
+    driver: bridge
+    name: friendly-i-network
+
+# Resource monitoring (optional)
+# Uncomment for monitoring
+#  watchtower:
+#    image: containrrr/watchtower:latest
+#    container_name: friendly-i-watchtower
+#    restart: unless-stopped
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    command: --interval 86400 --cleanup
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 64M
+#          cpus: '0.1'

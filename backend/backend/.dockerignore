@@ -1,8 +1,16 @@
+# Maven build files
+target/
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+# Legacy Gradle files (제거 예정)
 build/
 .gradle/
 gradle-app.setting
-!gradle-wrapper.jar
-!gradle-wrapper.properties
 
 # IDE files
 .idea/
@@ -43,8 +51,9 @@ README.md
 .env.*
 
 # Test results
-build/reports/
-build/test-results/
+target/surefire-reports/
+target/failsafe-reports/
+target/test-classes/
 
 # Temporary files
 *.tmp

@@ -1,5 +1,5 @@
 # ====================================
-#       Backend (Spring Boot + Java)
+#       Backend (Spring Boot + Maven)
 #       백엔드 전용 .gitignore
 # ====================================
 
@@ -7,13 +7,23 @@
 HELP.md
 README.md.bak
 
-# 🏗 Gradle Build Files
+# 📦 Maven Build Files
+target/
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# 🏗 Gradle Files (Legacy - 제거 예정)
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
-!**/src/main/**/build/
-!**/src/test/**/build/
 gradle-app.setting
 
 # ☕ Java Compiled Files
@@ -123,7 +133,8 @@ cache/
 TEST-*.xml
 test-output/
 test-results/
-target/
+surefire-reports/
+failsafe-reports/
 jacoco.exec
 *.exec
 .sonar/
@@ -144,14 +155,6 @@ spring-boot-devtools.properties
 .dockerenv
 Dockerfile.local
 docker-compose.override.yml
-
-# 📦 Maven (if used alongside Gradle)
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
 
 # 🔧 Custom Application Files
 config/local/

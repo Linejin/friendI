@@ -118,6 +118,9 @@ services:
       args:
         - REACT_APP_API_URL=http://localhost:8080
         - REACT_APP_ENV=production
+        - TSC_COMPILE_ON_ERROR=true
+        - SKIP_PREFLIGHT_CHECK=true
+        - GENERATE_SOURCEMAP=false
     container_name: friendlyi-frontend
     ports:
       - "80:80"

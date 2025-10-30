@@ -6,14 +6,14 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: friendlyi-postgres-${COMPOSE_PROJECT_NAME:-default}
+    container_name: friendlyi-postgres-friendi
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"  # 동적 포트 설정
+      - "5433:5432"  # 포트 충돌 방지
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      TZ: ${TZ}
+      POSTGRES_DB: friendlyi
+      POSTGRES_USER: friendlyi_user
+      POSTGRES_PASSWORD: friendlyi_password123
+      TZ: Asia/Seoul
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -45,11 +45,11 @@ services:
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: friendlyi-redis-${COMPOSE_PROJECT_NAME:-default}
+    container_name: friendlyi-redis-friendi
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     environment:
-      TZ: ${TZ}
+      TZ: Asia/Seoul
     volumes:
       - redis_data:/data
     networks:
@@ -66,7 +66,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}" --maxmemory 200mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass "redis_password123" --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   # Backend Service
   backend:
@@ -76,21 +76,21 @@ services:
       args:
         - BUILDKIT_INLINE_CACHE=1
     image: friendlyi-backend:latest
-    container_name: friendlyi-backend-${COMPOSE_PROJECT_NAME:-default}
+    container_name: friendlyi-backend-friendi
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256m -Xmx1g -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
-      - TZ=${TZ:-Asia/Seoul}
+      - TZ=Asia/Seoul
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB:-friendlyi}
-      - DB_USERNAME=${POSTGRES_USER:-friendlyi_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-friendlyi_password123}
+      - DB_NAME=friendlyi
+      - DB_USERNAME=friendlyi_user
+      - DB_PASSWORD=friendlyi_password123
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password123}
+      - REDIS_PASSWORD=redis_password123
       - SERVER_PORT=8080
       - LOGGING_LEVEL_COM_FRIENDLYI=DEBUG
     volumes:
@@ -130,10 +130,10 @@ services:
         - TSC_COMPILE_ON_ERROR=true
         - SKIP_PREFLIGHT_CHECK=true
         - GENERATE_SOURCEMAP=false
-    container_name: friendlyi-frontend-${COMPOSE_PROJECT_NAME:-default}
+    container_name: friendlyi-frontend-friendi
     ports:
-      - "${FRONTEND_HTTP_PORT:-80}:80"
-      - "${FRONTEND_HTTPS_PORT:-443}:443"  # HTTPS 지원
+      - "80:80"
+      - "443:443"  # HTTPS 지원
     depends_on:
       backend:
         condition: service_healthy

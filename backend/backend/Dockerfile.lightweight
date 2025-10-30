@@ -1,0 +1,58 @@
+# 경량화된 Backend Dockerfile (디스크 공간 절약)
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /app
+
+# 필수 도구만 설치
+RUN apk add --no-cache curl
+
+# Maven wrapper 복사
+COPY mvnw* ./
+COPY .mvn ./.mvn/
+RUN chmod +x ./mvnw
+
+# pom.xml 복사 (의존성 캐싱용)
+COPY pom.xml ./
+
+# 소스 코드 복사
+COPY src ./src/
+
+# 빌드 (오프라인 의존성 다운로드 건너뛰기)
+RUN ./mvnw clean package -DskipTests -B \
+    -Dmaven.repo.local=/tmp/m2-repo \
+    -Dmaven.test.skip=true \
+    -Dspring-boot.repackage.skip=false \
+    --no-transfer-progress
+
+# Production stage
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# 필수 도구만 설치
+RUN apk add --no-cache curl && \
+    addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+# JAR 파일만 복사
+COPY --from=builder /app/target/backend-*.jar app.jar
+
+# 디렉토리 생성 및 권한 설정
+RUN mkdir -p /app/logs && chown appuser:appuser /app -R
+
+# 사용자 전환
+USER appuser
+
+# 헬스체크
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# 포트 노출
+EXPOSE 8080
+
+# 환경 변수 (메모리 최적화)
+ENV SPRING_PROFILES_ACTIVE=docker
+ENV JAVA_OPTS="-Xms128m -Xmx768m -XX:+UseSerialGC -XX:+UseContainerSupport -XX:MaxRAMPercentage=70.0"
+
+# 애플리케이션 실행
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

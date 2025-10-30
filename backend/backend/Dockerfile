@@ -24,7 +24,8 @@ COPY src/ ./src/
 # Build the application (skip tests for faster build)
 RUN ./mvnw clean package -DskipTests -B \
     -Dmaven.compile.fork=false \
-    -Dmaven.test.skip=true
+    -Dmaven.test.skip=true \
+    -Dspring-boot.repackage.skip=false
 
 # Production stage
 FROM eclipse-temurin:21-jre-alpine

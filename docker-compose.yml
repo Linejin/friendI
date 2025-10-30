@@ -73,21 +73,26 @@ services:
     build:
       context: ./backend/backend
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: friendlyi-backend:latest
     container_name: friendlyi-backend-${COMPOSE_PROJECT_NAME:-default}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - JAVA_OPTS=${JAVA_OPTS}
-      - TZ=${TZ}
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xms256m -Xmx1g -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+      - TZ=${TZ:-Asia/Seoul}
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB}
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB:-friendlyi}
+      - DB_USERNAME=${POSTGRES_USER:-friendlyi_user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-friendlyi_password123}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password123}
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL_COM_FRIENDLYI=DEBUG
     volumes:
       - backend_data:/app/data
       - ./logs:/app/logs
@@ -102,15 +107,17 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1.5G
+          memory: 1.2G
+          cpus: '1.0'
         reservations:
-          memory: 512M
+          memory: 256M
+          cpus: '0.25'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 90s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
 
   # Frontend Service
   frontend:

@@ -132,8 +132,8 @@ services:
         - GENERATE_SOURCEMAP=false
     container_name: friendlyi-frontend-friendi
     ports:
-      - "80:80"
-      - "443:443"  # HTTPS 지원
+      - "3000:80"
+      - "3443:443"  # HTTPS 지원
     depends_on:
       backend:
         condition: service_healthy

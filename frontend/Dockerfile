@@ -16,7 +16,7 @@ ARG GENERATE_SOURCEMAP=false
 COPY package*.json ./
 
 # Install dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY . .

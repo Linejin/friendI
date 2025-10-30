@@ -59,7 +59,6 @@
   },
   "proxy": "http://localhost:8080",
   "devDependencies": {
-    "@types/react-big-calendar": "^1.8.9",
-    "@types/moment": "^2.13.0"
+    "@types/react-big-calendar": "^1.8.9"
   }
 }

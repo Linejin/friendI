@@ -6,14 +6,14 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: friendlyi-postgres
+    container_name: friendlyi-postgres-${COMPOSE_PROJECT_NAME:-default}
     ports:
-      - "5433:5432"  # 외부 5432 충돌 방지
+      - "${POSTGRES_PORT:-5433}:5432"  # 동적 포트 설정
     environment:
-      POSTGRES_DB: friendlyi
-      POSTGRES_USER: friendlyi_user
-      POSTGRES_PASSWORD: friendlyi_password123
-      TZ: Asia/Seoul
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TZ}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -23,31 +23,33 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
         reservations:
-          memory: 256M
+          memory: 128M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U friendlyi_user -d friendlyi"]
       interval: 30s
       timeout: 5s
       retries: 5
     command: |
-      postgres -c max_connections=100
-               -c shared_buffers=128MB
-               -c effective_cache_size=256MB
-               -c maintenance_work_mem=64MB
+      postgres -c max_connections=50
+               -c shared_buffers=64MB
+               -c effective_cache_size=128MB
+               -c maintenance_work_mem=32MB
                -c checkpoint_completion_target=0.9
-               -c wal_buffers=16MB
-               -c default_statistics_target=100
+               -c wal_buffers=8MB
+               -c default_statistics_target=50
+               -c work_mem=8MB
+               -c random_page_cost=1.1
 
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: friendlyi-redis
+    container_name: friendlyi-redis-${COMPOSE_PROJECT_NAME:-default}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     environment:
-      TZ: Asia/Seoul
+      TZ: ${TZ}
     volumes:
       - redis_data:/data
     networks:
@@ -64,28 +66,28 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    command: redis-server --appendonly yes --requirepass "redis_password123" --maxmemory 200mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD}" --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   # Backend Service
   backend:
     build:
       context: ./backend/backend
       dockerfile: Dockerfile
-    container_name: friendlyi-backend
+    container_name: friendlyi-backend-${COMPOSE_PROJECT_NAME:-default}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - JAVA_OPTS=-Xmx1g -Xms512m -XX:+UseG1GC -XX:+UseContainerSupport
-      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - JAVA_OPTS=${JAVA_OPTS}
+      - TZ=${TZ}
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=friendlyi
-      - DB_USERNAME=friendlyi_user
-      - DB_PASSWORD=friendlyi_password123
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=redis_password123
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - backend_data:/app/data
       - ./logs:/app/logs
@@ -121,10 +123,10 @@ services:
         - TSC_COMPILE_ON_ERROR=true
         - SKIP_PREFLIGHT_CHECK=true
         - GENERATE_SOURCEMAP=false
-    container_name: friendlyi-frontend
+    container_name: friendlyi-frontend-${COMPOSE_PROJECT_NAME:-default}
     ports:
-      - "80:80"
-      - "443:443"  # HTTPS 지원
+      - "${FRONTEND_HTTP_PORT:-80}:80"
+      - "${FRONTEND_HTTPS_PORT:-443}:443"  # HTTPS 지원
     depends_on:
       backend:
         condition: service_healthy

@@ -262,6 +262,10 @@ deploy_services() {
         # Force garbage collection and clear cache before build
         sync && echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
         
+        # Monitor memory during build
+        (while true; do free -h; sleep 30; done) &
+        MONITOR_PID=$!
+        
         # Build with minimal memory usage
         echo_info "백엔드 이미지 빌드 중... (메모리 최적화 모드)"
         DOCKER_BUILDKIT=0 docker-compose -f "$compose_file" build --no-cache backend || {
@@ -275,10 +279,15 @@ deploy_services() {
         # Build frontend with extreme memory limits
         echo_info "프론트엔드 이미지 빌드 중... (극한 메모리 최적화 모드)"
         DOCKER_BUILDKIT=0 docker-compose -f "$compose_file" build --no-cache frontend || {
+            # Stop memory monitoring
+            [ -n "$MONITOR_PID" ] && kill $MONITOR_PID 2>/dev/null || true
             echo_error "프론트엔드 빌드 실패"
             echo_info "메모리 부족으로 빌드 실패. 스왑 공간을 늘리거나 더 큰 인스턴스를 사용해주세요."
             return 1
         }
+        
+        # Stop memory monitoring on success
+        [ -n "$MONITOR_PID" ] && kill $MONITOR_PID 2>/dev/null || true
     elif [ "$available_mem" -lt 800 ]; then
         echo_warning "메모리 부족으로 인해 순차 빌드를 실행합니다."
         

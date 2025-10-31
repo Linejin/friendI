@@ -35,6 +35,14 @@ echo_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Function to show disk space usage
+show_disk_usage() {
+    echo_info "현재 디스크 사용량:"
+    df -h / | head -2
+    echo_info "Docker 이미지 사용량:"
+    docker system df 2>/dev/null || echo "Docker가 실행되지 않음"
+}
+
 # Function to cleanup disk space
 cleanup_disk_space() {
     echo_info "디스크 공간 정리 시작..."
@@ -52,8 +60,16 @@ cleanup_disk_space() {
     # Clean Docker system (if Docker is installed)
     if command -v docker &> /dev/null; then
         echo_info "Docker 시스템 정리 중..."
-        sudo docker system prune -a -f 2>/dev/null || true
-        sudo docker volume prune -f 2>/dev/null || true
+        # Stop all containers first
+        sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
+        # Remove all containers
+        sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
+        # Remove all images
+        sudo docker rmi $(sudo docker images -q) 2>/dev/null || true
+        # System-wide cleanup
+        sudo docker system prune -a -f --volumes 2>/dev/null || true
+        # Remove build cache
+        sudo docker builder prune -a -f 2>/dev/null || true
     fi
     
     # Clean temporary files
@@ -380,12 +396,15 @@ main() {
     cd "$SCRIPT_DIR"
     
     check_system_requirements
+    show_disk_usage
     create_env_file
     create_directories
     pull_latest_code
     cleanup_docker
+    show_disk_usage
     deploy_services
     wait_for_services
+    show_disk_usage
     show_deployment_info
     
     echo_success "🎉 FriendlyI 배포가 완료되었습니다!"

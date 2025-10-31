@@ -27,11 +27,15 @@ RUN ./mvnw dependency:go-offline -B
 # Copy source code
 COPY src/ ./src/
 
-# Build the application with optimized settings
+# Build the application with optimized settings and cleanup
 RUN ./mvnw clean package -DskipTests \
     -B \
     -Dmaven.compile.fork=false \
-    -Dmaven.test.skip=true
+    -Dmaven.test.skip=true && \
+    rm -rf ~/.m2/repository && \
+    rm -rf target/classes && \
+    rm -rf target/test-classes && \
+    rm -rf target/maven-*
 
 # Production stage - 안정적인 JRE 이미지 사용
 FROM eclipse-temurin:21-jre-alpine

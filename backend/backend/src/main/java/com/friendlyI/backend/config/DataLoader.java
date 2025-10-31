@@ -8,6 +8,7 @@ import com.friendlyI.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class DataLoader implements CommandLineRunner {
     private final MemberRepository memberRepository;
     private final LocationRepository locationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Environment environment;
 
     @Override
     public void run(String... args) throws Exception {

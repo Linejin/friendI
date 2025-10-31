@@ -130,6 +130,50 @@ yarn-error.log*
 # 🚀 배포 관련
 dist/
 build/
+target/
 *.zip
 *.tar.gz
 *.rar
+
+# ☕ Java 관련
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# 🛠 Maven 관련
+.mvn/
+!.mvn/wrapper/maven-wrapper.properties
+
+# 🎯 Gradle 관련 (완전 제거됨, 혹시 모를 경우 대비)
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# 🌐 Node.js 관련
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+.next/
+
+# 🐳 Docker 관련
+Dockerfile.tmp
+docker-compose.*.tmp
+.dockerignore.tmp
+
+# 📜 불필요한 스크립트들 (정리됨)
+*-old.sh
+*-backup.sh
+*-legacy.*
+*_old.*
+*_backup.*
+fix-*.sh
+build-alternative.*
+deploy-ec2-optimized.*

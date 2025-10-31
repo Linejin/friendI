@@ -31,12 +31,22 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# 환경 변수 설정
-export NODE_OPTIONS="--max-old-space-size=1024"
-export JAVA_OPTS="-Xms256m -Xmx1024m -XX:+UseSerialGC -XX:+UseContainerSupport"
-export MAVEN_OPTS="-Xmx512m -XX:+UseSerialGC"
+# 환경 변수 설정 (t3.small 2GB RAM 고려)
+export NODE_OPTIONS="--max-old-space-size=768"  # 768MB로 감소
+export JAVA_OPTS="-Xms128m -Xmx768m -XX:+UseSerialGC -XX:+UseContainerSupport"  # 768MB로 감소
+export MAVEN_OPTS="-Xmx384m -XX:+UseSerialGC"  # 384MB로 감소
 
 log_info "환경 변수 설정 완료 (t3.small 최적화)"
+
+# 메모리 부족 시 자동 정리 함수 로드
+source ./emergency-memory.sh 2>/dev/null || {
+    log_warning "emergency-memory.sh를 찾을 수 없습니다. 기본 메모리 관리로 진행합니다."
+    check_memory() { free -m | awk 'NR==2{printf "%.0f", $7}'; }
+    emergency_cleanup() { 
+        sync && echo 1 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || true
+        docker system prune -f >/dev/null 2>&1 || true
+    }
+}
 
 # 1. 데이터베이스 데이터 보존하며 Docker 환경 정리
 log_info "데이터베이스 데이터 보존하며 Docker 환경 정리 중..."
@@ -130,10 +140,25 @@ df -h / | tail -1
 echo ""
 
 AVAILABLE_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
-if [ "$AVAILABLE_MEM" -lt 800 ]; then
-    log_warning "사용 가능한 메모리가 ${AVAILABLE_MEM}MB로 부족할 수 있습니다"
-    log_info "페이지 캐시 정리 중..."
+if [ "$AVAILABLE_MEM" -lt 1000 ]; then
+    log_warning "사용 가능한 메모리가 ${AVAILABLE_MEM}MB로 부족합니다"
+    log_info "시스템 최적화 실행 중..."
+    
+    # 페이지 캐시 정리
     sync && echo 1 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || true
+    
+    # 불필요한 서비스 정리
+    docker system prune -f >/dev/null 2>&1 || true
+    
+    # 메모리 재확인
+    AVAILABLE_MEM_AFTER=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+    log_info "최적화 후 사용 가능한 메모리: ${AVAILABLE_MEM_AFTER}MB"
+    
+    if [ "$AVAILABLE_MEM_AFTER" -lt 800 ]; then
+        log_error "메모리 부족으로 배포를 중단합니다"
+        log_info "다른 프로세스를 종료하거나 인스턴스를 재시작 후 다시 시도하세요"
+        exit 1
+    fi
 fi
 
 # 4. 경량화 설정 파일 생성
@@ -151,7 +176,7 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=2 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 EXPOSE 8080
-ENV JAVA_OPTS="-server -Xms128m -Xmx1024m -XX:+UseSerialGC -XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0 -Djava.awt.headless=true -Dspring.jmx.enabled=false"
+ENV JAVA_OPTS="-server -Xms128m -Xmx768m -XX:+UseSerialGC -XX:+UseContainerSupport -XX:MaxRAMPercentage=40.0 -Djava.awt.headless=true -Dspring.jmx.enabled=false -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 EOF
 
@@ -160,7 +185,7 @@ cat > frontend/Dockerfile << 'EOF'
 FROM node:18-alpine AS build
 WORKDIR /app
 RUN apk add --no-cache --virtual .build-deps python3 make g++
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_OPTIONS="--max-old-space-size=768"
 ENV GENERATE_SOURCEMAP=false
 ENV CI=true
 COPY package*.json ./
@@ -335,12 +360,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
 
   frontend:
     build:
@@ -355,12 +386,18 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 5s
+      interval: 45s
+      timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 45s
 EOF
 
 log_success "경량화 설정 파일 생성 완료"
@@ -427,15 +464,46 @@ cd ../..
 # 6. Docker 이미지 순차 빌드 (메모리 절약)
 log_info "Docker 이미지 순차 빌드 시작..."
 
-# Backend 먼저 빌드
-log_info "Backend 이미지 빌드 중..."
-docker-compose build --no-cache backend
+# 메모리 확인 및 자동 정리
+CURRENT_MEM=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+if [ "$CURRENT_MEM" -lt 700 ]; then
+    log_warning "메모리 부족 (${CURRENT_MEM}MB). 빌드 전 정리 실행..."
+    
+    # 긴급 메모리 정리 실행
+    if command -v emergency_cleanup >/dev/null 2>&1; then
+        emergency_cleanup
+    else
+        docker system prune -f >/dev/null 2>&1 || true
+        sync && echo 1 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || true
+    fi
+    
+    # 정리 후 재확인
+    CURRENT_MEM_AFTER=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+    if [ "$CURRENT_MEM_AFTER" -lt 500 ]; then
+        log_error "메모리 정리 후에도 부족합니다 (${CURRENT_MEM_AFTER}MB)"
+        log_info "시스템 재시작을 고려하거나 다른 프로세스를 종료하세요"
+        exit 1
+    fi
+    log_info "메모리 정리 완료: ${CURRENT_MEM}MB → ${CURRENT_MEM_AFTER}MB"
+fi
+
+# Backend 먼저 빌드 (병렬 빌드 비활성화)
+log_info "Backend 이미지 빌드 중 (메모리 제한 모드)..."
+DOCKER_BUILDKIT=1 docker-compose build --no-cache --parallel=1 backend
 docker image prune -f 2>/dev/null || true
 
-# Frontend 빌드
-log_info "Frontend 이미지 빌드 중..."
-docker-compose build --no-cache frontend
+# 중간 정리
+log_info "빌드 중간 정리..."
+docker builder prune -f >/dev/null 2>&1 || true
+sleep 5
+
+# Frontend 빌드 (순차 진행)
+log_info "Frontend 이미지 빌드 중 (메모리 제한 모드)..."
+DOCKER_BUILDKIT=1 docker-compose build --no-cache --parallel=1 frontend
 docker image prune -f 2>/dev/null || true
+
+# 최종 정리
+docker builder prune -af 2>/dev/null || true
 
 log_success "Docker 이미지 빌드 완료"
 
@@ -456,30 +524,42 @@ if [ "$REDIS_RUNNING" = true ]; then
     log_info "기존 Redis 데이터가 유지되었는지 확인..."
 fi
 
-# PostgreSQL 대기
+# PostgreSQL 대기 (t3.small에서는 더 오래 걸릴 수 있음)
 log_info "PostgreSQL 연결 대기..."
-for i in {1..30}; do
+for i in {1..60}; do
     if docker exec friendi-postgres pg_isready -U friendlyi_user -d friendlyi >/dev/null 2>&1; then
         log_success "PostgreSQL 준비 완료"
         break
     fi
-    if [ $i -eq 30 ]; then
+    if [ $i -eq 60 ]; then
         log_error "PostgreSQL 연결 타임아웃"
+        docker logs friendi-postgres --tail 10
         exit 1
     fi
-    sleep 2
+    
+    # 진행 상황 표시
+    if [ $((i % 10)) -eq 0 ]; then
+        log_info "PostgreSQL 시작 대기 중... (${i}/60)"
+    fi
+    sleep 3
 done
 
-# Redis 대기
+# Redis 대기 (t3.small에서는 더 오래 걸릴 수 있음)
 log_info "Redis 연결 대기..."
-for i in {1..15}; do
+for i in {1..30}; do
     if docker exec friendi-redis redis-cli ping 2>/dev/null | grep -q PONG; then
         log_success "Redis 준비 완료"
         break
     fi
-    if [ $i -eq 15 ]; then
+    if [ $i -eq 30 ]; then
         log_error "Redis 연결 타임아웃"
+        docker logs friendi-redis --tail 10
         exit 1
+    fi
+    
+    # 진행 상황 표시
+    if [ $((i % 5)) -eq 0 ]; then
+        log_info "Redis 시작 대기 중... (${i}/30)"
     fi
     sleep 2
 done
@@ -488,19 +568,36 @@ done
 log_info "Backend 서비스 시작..."
 docker-compose up -d backend
 
-# Backend 헬스체크
+# Backend 헬스체크 (t3.small에서는 시작이 더 오래 걸림)
 log_info "Backend 헬스체크 대기..."
-for i in {1..60}; do
+for i in {1..120}; do
     if curl -s -f http://localhost:8080/actuator/health >/dev/null 2>&1; then
-        log_success "Backend 준비 완료"
-        break
+        HEALTH_RESPONSE=$(curl -s http://localhost:8080/actuator/health 2>/dev/null || echo '{"status":"UNKNOWN"}')
+        if echo "$HEALTH_RESPONSE" | grep -q '"status":"UP"'; then
+            log_success "Backend 준비 완료 (정상 상태)"
+            break
+        else
+            log_warning "Backend 응답하지만 아직 준비 중..."
+        fi
     fi
-    if [ $i -eq 60 ]; then
+    
+    if [ $i -eq 120 ]; then
         log_error "Backend 헬스체크 타임아웃"
-        docker logs friendi-backend --tail 20
+        log_info "Backend 로그 확인:"
+        docker logs friendi-backend --tail 30
+        log_info "Backend 컨테이너 상태:"
+        docker ps --filter "name=friendi-backend"
         exit 1
     fi
-    sleep 2
+    
+    # 진행 상황 표시 (t3.small은 느림)
+    if [ $((i % 15)) -eq 0 ]; then
+        log_info "Backend 시작 대기 중... (${i}/120)"
+        # 메모리 상태도 함께 표시
+        MEM_USAGE=$(free -m | awk 'NR==2{printf "%.0f", ($3/$2)*100}')
+        log_info "현재 메모리 사용률: ${MEM_USAGE}%"
+    fi
+    sleep 3
 done
 
 # Frontend 시작

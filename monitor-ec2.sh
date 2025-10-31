@@ -24,12 +24,14 @@ free -h
 echo ""
 
 MEMORY_USAGE=$(free | grep '^Mem:' | awk '{printf("%.1f", ($3/$2) * 100.0)}')
-if (( $(echo "$MEMORY_USAGE > 85" | bc -l) )); then
+if (( $(echo "$MEMORY_USAGE > 90" | bc -l) )); then
+    log_error "메모리 사용량이 ${MEMORY_USAGE}%로 매우 높습니다! 즉시 조치 필요"
+elif (( $(echo "$MEMORY_USAGE > 80" | bc -l) )); then
     log_error "메모리 사용량이 ${MEMORY_USAGE}%로 높습니다!"
-elif (( $(echo "$MEMORY_USAGE > 70" | bc -l) )); then
-    log_warning "메모리 사용량: ${MEMORY_USAGE}%"
+elif (( $(echo "$MEMORY_USAGE > 65" | bc -l) )); then
+    log_warning "메모리 사용량: ${MEMORY_USAGE}% (주의)"
 else
-    log_success "메모리 사용량: ${MEMORY_USAGE}%"
+    log_success "메모리 사용량: ${MEMORY_USAGE}% (양호)"
 fi
 
 echo ""
@@ -110,11 +112,20 @@ log_info "성능 최적화 제안"
 echo ""
 
 # 메모리 기반 제안
-if (( $(echo "$MEMORY_USAGE > 80" | bc -l) )); then
+if (( $(echo "$MEMORY_USAGE > 90" | bc -l) )); then
+    echo "🚨 메모리 사용량이 매우 높습니다! 즉시 조치:"
+    echo "   1. ./emergency-memory.sh  (긴급 메모리 정리)"
+    echo "   2. docker-compose restart (서비스 재시작)"
+    echo "   3. sudo reboot (최후 수단)"
+elif (( $(echo "$MEMORY_USAGE > 80" | bc -l) )); then
     echo "🔧 메모리 사용량이 높습니다. 다음 조치를 고려하세요:"
-    echo "   1. docker-compose -f docker-compose.ec2-optimized.yml restart"
-    echo "   2. ./cleanup-resources.sh"
-    echo "   3. 불필요한 프로세스 종료"
+    echo "   1. ./cleanup-resources.sh"
+    echo "   2. ./emergency-memory.sh"
+    echo "   3. docker-compose restart backend"
+elif (( $(echo "$MEMORY_USAGE > 65" | bc -l) )); then
+    echo "⚠️  메모리 사용량 주의. 예방적 조치:"
+    echo "   1. ./cleanup-resources.sh"
+    echo "   2. docker system prune -f"
 fi
 
 # 디스크 기반 제안

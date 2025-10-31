@@ -21,10 +21,10 @@ echo "🔄 EC2 t3.small 무중단 재배포"
 echo "=============================="
 echo ""
 
-# 환경 변수 설정
-export NODE_OPTIONS="--max-old-space-size=1024"
-export JAVA_OPTS="-Xms256m -Xmx1024m -XX:+UseSerialGC -XX:+UseContainerSupport"
-export MAVEN_OPTS="-Xmx512m -XX:+UseSerialGC"
+# 환경 변수 설정 (t3.small 2GB RAM 고려)
+export NODE_OPTIONS="--max-old-space-size=768"  # 768MB로 감소
+export JAVA_OPTS="-Xms128m -Xmx768m -XX:+UseSerialGC -XX:+UseContainerSupport"  # 768MB로 감소
+export MAVEN_OPTS="-Xmx384m -XX:+UseSerialGC"  # 384MB로 감소
 
 log_info "환경 변수 설정 완료 (t3.small 최적화)"
 
@@ -73,8 +73,8 @@ AVAILABLE_DISK=$(df / | awk 'NR==2{print $4}')
 log_info "사용 가능한 메모리: ${AVAILABLE_MEM}MB"
 log_info "사용 가능한 디스크: ${AVAILABLE_DISK}KB"
 
-if [ "$AVAILABLE_MEM" -lt 600 ]; then
-    log_warning "메모리 부족. 시스템 최적화 실행..."
+if [ "$AVAILABLE_MEM" -lt 800 ]; then
+    log_warning "메모리 부족 (${AVAILABLE_MEM}MB). 시스템 최적화 실행..."
     
     # 메모리 정리
     sync && echo 1 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1 || true
@@ -86,6 +86,16 @@ if [ "$AVAILABLE_MEM" -lt 600 ]; then
     
     # npm 캐시 정리
     npm cache clean --force >/dev/null 2>&1 || true
+    
+    # 메모리 재확인
+    AVAILABLE_MEM_AFTER=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+    log_info "최적화 후 사용 가능한 메모리: ${AVAILABLE_MEM_AFTER}MB"
+    
+    if [ "$AVAILABLE_MEM_AFTER" -lt 600 ]; then
+        log_error "메모리 부족으로 무중단 재배포를 중단합니다"
+        log_info "일반 재배포를 사용하세요: ./deploy-initial.sh"
+        exit 1
+    fi
     
     log_success "시스템 최적화 완료"
 fi

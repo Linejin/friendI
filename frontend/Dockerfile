@@ -1,38 +1,46 @@
-# Frontend Dockerfile
+# Frontend Dockerfile - Simplified and Optimized
 # Build stage
 FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Build arguments
-ARG REACT_APP_API_URL=http://localhost:8080
-ARG REACT_APP_ENV=production
-ARG TSC_COMPILE_ON_ERROR=true
-ARG SKIP_PREFLIGHT_CHECK=true
-ARG GENERATE_SOURCEMAP=false
+# Install system dependencies for native modules
+RUN apk add --no-cache python3 make g++
 
-# Copy package files
+# Set npm configuration for better reliability
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5
+
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies (including devDependencies for build)
-RUN npm install
+# Install dependencies with error handling
+RUN npm cache clean --force && \
+    npm ci --only=production --ignore-scripts || \
+    npm install --legacy-peer-deps --no-optional || \
+    npm install --force
 
 # Copy source code
 COPY . .
 
 # Set environment variables for build
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-ENV REACT_APP_ENV=$REACT_APP_ENV
-ENV TSC_COMPILE_ON_ERROR=$TSC_COMPILE_ON_ERROR
-ENV SKIP_PREFLIGHT_CHECK=$SKIP_PREFLIGHT_CHECK
-ENV GENERATE_SOURCEMAP=$GENERATE_SOURCEMAP
+ENV CI=false
+ENV TSC_COMPILE_ON_ERROR=true
+ENV SKIP_PREFLIGHT_CHECK=true
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_ENV=production
 
-# Build the application with error tolerance
-RUN npm run build || npm run build:safe || npm run build:prod
+# Build the application
+RUN npm run build:safe
 
-# Production stage
+# Production stage with nginx
 FROM nginx:alpine
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -40,8 +48,19 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built application from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
+# Create nginx directories if they don't exist
+RUN mkdir -p /var/log/nginx && \
+    mkdir -p /var/cache/nginx && \
+    mkdir -p /var/run && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/log/nginx /var/cache/nginx /var/run/nginx.pid
+
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+# Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]

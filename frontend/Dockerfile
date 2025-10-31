@@ -1,12 +1,20 @@
 # Frontend Dockerfile - Simplified and Optimized
 # Build stage
-FROM node:18-alpine AS build
+FROM node:18-bullseye-slim AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install system dependencies for native modules (Debian-based)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python3 \
+       make \
+       g++ \
+       build-essential \
+       ca-certificates \
+       curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set npm configuration for better reliability
 RUN npm config set registry https://registry.npmjs.org/ && \

@@ -8,13 +8,13 @@ services:
       context: ./backend/backend
       dockerfile: Dockerfile
       args:
-        - MAVEN_OPTS=-Xmx512m -XX:+UseSerialGC
+        - MAVEN_OPTS=-Xmx448m -XX:+UseSerialGC
     container_name: friendlyi-backend-lowmem
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - JAVA_OPTS=-Xmx512m -Xms128m -XX:+UseSerialGC -XX:MaxRAMPercentage=60 -XX:+UseContainerSupport
+      - JAVA_OPTS=-Xmx448m -Xms128m -XX:+UseSerialGC -XX:MaxRAMPercentage=55 -XX:+UseContainerSupport
       - TZ=Asia/Seoul
       - DB_USERNAME=sa
       - DB_PASSWORD=
@@ -31,7 +31,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 640M
         reservations:
           memory: 128M
     healthcheck:
@@ -51,7 +51,7 @@ services:
       - "80:80"
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - friendlyi-network
     restart: unless-stopped

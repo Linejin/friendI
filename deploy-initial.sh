@@ -295,32 +295,53 @@ deploy_services() {
     local selected_compose_file="${compose_file:-docker-compose.yml}"
     docker-compose -f "$selected_compose_file" up -d || {
         echo_error "서비스 시작 실패"
+        echo_info "컨테이너 상태 확인 중..."
+        docker-compose -f "$selected_compose_file" ps
+        echo_info "백엔드 로그 확인 중..."
+        docker-compose -f "$selected_compose_file" logs backend || true
         return 1
     }
     
     echo_success "서비스 배포 완료"
 }
 
-# Function to wait for services to be healthy
+# Function to wait for services to be ready
 wait_for_services() {
     echo_info "서비스 상태 확인 중..."
     
-    local max_attempts=30
+    local compose_file_used=$(cat .compose_file_used 2>/dev/null || echo "docker-compose.yml")
+    local max_attempts=40
     local attempt=1
     
     while [ $attempt -le $max_attempts ]; do
-        if docker-compose ps | grep -q "healthy"; then
+        local backend_status=$(docker-compose -f "$compose_file_used" ps backend | grep -c "Up" || echo "0")
+        local frontend_status=$(docker-compose -f "$compose_file_used" ps frontend | grep -c "Up" || echo "0")
+        
+        if [ "$backend_status" -gt 0 ] && [ "$frontend_status" -gt 0 ]; then
             echo_success "서비스가 정상적으로 시작되었습니다!"
+            # 백엔드 헬스체크 확인
+            echo_info "백엔드 헬스체크 확인 중..."
+            if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
+                echo_success "백엔드 헬스체크 통과!"
+            else
+                echo_warning "백엔드 헬스체크 실패, 하지만 서비스는 실행 중입니다."
+            fi
             return 0
         fi
         
-        echo_info "서비스 시작 대기 중... ($attempt/$max_attempts)"
-        sleep 10
+        if [ $((attempt % 5)) -eq 0 ]; then
+            echo_info "서비스 시작 대기 중... ($attempt/$max_attempts)"
+            docker-compose -f "$compose_file_used" ps
+        fi
+        
+        sleep 15
         ((attempt++))
     done
     
-    echo_warning "서비스 상태 확인 시간 초과. 수동으로 확인해 주세요."
-    docker-compose ps
+    echo_warning "서비스 상태 확인 시간 초과. 현재 상태를 확인해 주세요."
+    docker-compose -f "$compose_file_used" ps
+    echo_info "백엔드 로그:"
+    docker-compose -f "$compose_file_used" logs --tail=20 backend
 }
 
 # Function to show deployment info

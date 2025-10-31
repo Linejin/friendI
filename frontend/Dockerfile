@@ -1,41 +1,39 @@
-# Frontend Dockerfile - Minimal for disk space
+# Frontend Dockerfile - Simplified and Optimized
 # Build stage
 FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install minimal build tools for alpine (much smaller)
-RUN apk add --no-cache --virtual .build-deps \
-    python3 \
-    make \
-    g++ \
-    && npm config set registry https://registry.npmjs.org/
+# Install system dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
+# Set npm configuration for better reliability
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5
 
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies (simplified for space)
-RUN npm ci --only=production --no-audit --no-fund \
-    && npm cache clean --force
+# Install dependencies with error handling
+RUN npm ci || npm install
 
 # Copy source code
 COPY . .
 
 # Set environment variables for build
-ENV CI=false \
-    TSC_COMPILE_ON_ERROR=true \
-    SKIP_PREFLIGHT_CHECK=true \
-    GENERATE_SOURCEMAP=false \
-    REACT_APP_ENV=production \
-    NODE_OPTIONS="--max-old-space-size=2048"
+ENV CI=false
+ENV TSC_COMPILE_ON_ERROR=true
+ENV SKIP_PREFLIGHT_CHECK=true
+ENV GENERATE_SOURCEMAP=false
+ENV REACT_APP_ENV=production
+ENV REACT_APP_API_BASE_URL=/api
+ENV REACT_APP_API_TIMEOUT=10000
 
-# Build the application and clean up
-RUN npm run build:safe \
-    && npm cache clean --force \
-    && apk del .build-deps \
-    && rm -rf node_modules \
-    && rm -rf /tmp/* /var/cache/apk/*
+# Build the application
+RUN npm run build:safe
 
 # Production stage with nginx
 FROM nginx:alpine

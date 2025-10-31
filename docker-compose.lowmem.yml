@@ -1,20 +1,20 @@
-# Docker Compose for FriendlyI Production Deployment
-# Optimized for Linux EC2 deployment
+# Docker Compose for FriendlyI - Low Memory Optimized (t3.small)
+# Optimized for AWS EC2 t3.small (2GB RAM)
 
 services:
-  # Backend Service
+  # Backend Service - Memory Optimized
   backend:
     build:
       context: ./backend/backend
       dockerfile: Dockerfile
       args:
-        - MAVEN_OPTS=-Xmx768m -XX:+UseSerialGC
-    container_name: friendlyi-backend
+        - MAVEN_OPTS=-Xmx512m -XX:+UseSerialGC
+    container_name: friendlyi-backend-lowmem
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - JAVA_OPTS=-Xmx768m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75
+      - JAVA_OPTS=-Xmx512m -Xms128m -XX:+UseSerialGC -XX:MaxRAMPercentage=60 -XX:+UseContainerSupport
       - TZ=Asia/Seoul
       - DB_USERNAME=sa
       - DB_PASSWORD=
@@ -31,22 +31,22 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 768M
         reservations:
-          memory: 256M
+          memory: 128M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      interval: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
 
-  # Frontend Service
+  # Frontend Service - Lightweight
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: friendlyi-frontend
+    container_name: friendlyi-frontend-lowmem
     ports:
       - "80:80"
     depends_on:
@@ -58,15 +58,15 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 128M
         reservations:
-          memory: 64M
+          memory: 32M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
 networks:
   friendlyi-network:

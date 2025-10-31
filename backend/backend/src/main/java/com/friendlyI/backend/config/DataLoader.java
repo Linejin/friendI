@@ -91,7 +91,8 @@ public class DataLoader implements CommandLineRunner {
      * 기본 관리자 계정 생성
      */
     private void createDefaultAdminUser() {
-        String adminLoginId = "admin";
+        String adminLoginId = environment.getProperty("ADMIN_USERNAME", "admin");
+        String adminPassword = environment.getProperty("ADMIN_PASSWORD", "friendlyi2025!");
 
         // 이미 admin 계정이 존재하는지 확인
         if (memberRepository.existsByLoginId(adminLoginId)) {
@@ -102,7 +103,7 @@ public class DataLoader implements CommandLineRunner {
         // 관리자 계정 생성
         Member admin = Member.builder()
                 .loginId(adminLoginId)
-                .password(passwordEncoder.encode("admin123")) // 기본 비밀번호
+                .password(passwordEncoder.encode(adminPassword))
                 .name("시스템 관리자")
                 .email("admin@friendlyi.com")
                 .phoneNumber("010-0000-0000")
@@ -114,8 +115,8 @@ public class DataLoader implements CommandLineRunner {
 
         log.info("기본 관리자 계정이 생성되었습니다.");
         log.info("로그인 ID: {}", adminLoginId);
-        log.info("비밀번호: admin123");
-        log.info("보안을 위해 초기 비밀번호를 변경해주세요!");
+        // 보안상 패스워드는 로그에 출력하지 않음
+        log.warn("⚠️ 보안을 위해 초기 패스워드를 반드시 변경해주세요!");
     }
 
     /**

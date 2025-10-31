@@ -79,22 +79,11 @@ public class SecurityConfig {
                 return http.build();
         }
 
-        // ✅ CORS 설정 - 개발/배포 환경 모두 지원
+        // ✅ 프론트 개발 서버 CORS 허용
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration cfg = new CorsConfiguration();
-                
-                // 허용할 오리진들 (개발 + 배포)
-                cfg.setAllowedOriginPatterns(List.of(
-                        "http://localhost:*",           // 로컬 개발
-                        "https://localhost:*",          // 로컬 HTTPS
-                        "http://*.amazonaws.com",       // AWS 배포
-                        "https://*.amazonaws.com",      // AWS HTTPS
-                        "http://*.compute-1.amazonaws.com",  // EC2 도메인
-                        "https://*.compute-1.amazonaws.com", // EC2 HTTPS
-                        "*"                             // 임시로 모든 도메인 허용
-                ));
-                
+                cfg.setAllowedOrigins(List.of("http://localhost:3000"));
                 cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
                 cfg.setAllowedHeaders(List.of("*"));
                 cfg.setAllowCredentials(true);

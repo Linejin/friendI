@@ -56,43 +56,18 @@ Thumbs.db
 desktop.ini
 
 # 🛠 IDE 및 에디터 설정
-
-# IntelliJ IDEA
-.idea/
-*.iws
-*.iml
-*.ipr
-out/
-.idea_modules/
-atlassian-ide-plugin.xml
-
-# VS Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-
-# Eclipse
-.metadata/
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.settings/
-.loadpath
-.recommenders/
-.project
-.pydevproject
-
-# Other editors
+.vscode/settings.json
+.vscode/launch.json
+.vscode/.ropeproject
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
 
 # 🗑 임시 및 백업 파일
 tmp/
@@ -130,50 +105,6 @@ yarn-error.log*
 # 🚀 배포 관련
 dist/
 build/
-target/
 *.zip
 *.tar.gz
 *.rar
-
-# ☕ Java 관련
-*.class
-*.jar
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# 🛠 Maven 관련
-.mvn/
-!.mvn/wrapper/maven-wrapper.properties
-
-# 🎯 Gradle 관련 (완전 제거됨, 혹시 모를 경우 대비)
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-# 🌐 Node.js 관련
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.npm
-.eslintcache
-.next/
-
-# 🐳 Docker 관련
-Dockerfile.tmp
-docker-compose.*.tmp
-.dockerignore.tmp
-
-# 📜 불필요한 스크립트들 (정리됨)
-*-old.sh
-*-backup.sh
-*-legacy.*
-*_old.*
-*_backup.*
-fix-*.sh
-build-alternative.*
-deploy-ec2-optimized.*

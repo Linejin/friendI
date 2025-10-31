@@ -1,48 +1,25 @@
-# FriendlyI 프로젝트 🐤
-
-> EC2 t3.small 최적화된 Spring Boot + React 풀스택 애플리케이션
+# FriendlyI 예약 관리 시스템 🐤
 
 Spring Boot 백엔드와 React 프론트엔드로 구성된 예약 관리 시스템입니다.
 
-## 🏗️ 프로젝트 구조
+## 프로젝트 구조
 
 ```
-├── backend/backend/           # Spring Boot 백엔드 (Maven)
-│   ├── src/                   # Java 소스 코드
-│   ├── pom.xml               # Maven 설정 (Gradle에서 전환)
-│   └── Dockerfile            # 백엔드 Docker 이미지
-├── frontend/                 # React 프론트엔드
-│   ├── src/                  # React 소스 코드
-│   ├── package.json         # npm 설정
-│   ├── nginx.conf           # nginx 설정
-│   └── Dockerfile           # 프론트엔드 Docker 이미지
-├── docker-compose.yml       # 메인 Docker Compose 설정
-└── 배포 스크립트들/
-    ├── deploy-initial.sh         # 초기 배포 (DB 데이터 보존)
-    ├── redeploy-zero-downtime.sh # 무중단 재배포
-    ├── monitor-ec2.sh           # EC2 리소스 모니터링
-    ├── cleanup-resources.sh     # 시스템 리소스 정리
-    └── setup-permissions.sh     # 스크립트 권한 설정
+I/
+├── backend/           # Spring Boot API 서버
+│   ├── backend/
+│   │   ├── src/
+│   │   ├── build.gradle
+│   │   └── ...
+└── frontend/          # React 웹 애플리케이션
+    ├── src/
+    │   ├── components/
+    │   ├── pages/
+    │   ├── api/
+    │   └── types/
+    ├── package.json
+    └── ...
 ```
-
-## 🛠️ 기술 스택
-
-### Backend
-- **Java 21** + **Spring Boot 3.2.10**
-- **Maven 3.9.6** (Gradle에서 완전 전환)
-- **PostgreSQL 15** (포트 5433)
-- **Redis 7** (포트 6379)
-- **Spring Security** + **JWT**
-- **Spring Boot Actuator** (헬스체크)
-
-### Frontend
-- **React 18** + **TypeScript**
-- **Nginx** (리버스 프록시)
-
-### DevOps
-- **Docker** + **Docker Compose**
-- **Alpine Linux** 기반 경량 이미지
-- **EC2 t3.small** 최적화 (2GB RAM, 2 vCPU)
 
 ## 기능
 
@@ -62,130 +39,201 @@ Spring Boot 백엔드와 React 프론트엔드로 구성된 예약 관리 시스
    - 📱 **반응형 달력**: 월/주/일 단위 보기 전환 가능
 3. **신청 관리**: 예약 신청, 승인, 대기열 관리
 
-## 🚀 배포 가이드
+## 실행 방법
 
-### 1. 첫 배포 (Linux)
-```bash
-./setup-permissions.sh      # 실행 권한 부여
-./deploy-initial.sh         # 초기 배포 (DB 데이터 보존)
-```
-
-### 2. 코드 업데이트
-```bash
-./redeploy-zero-downtime.sh  # 무중단 재배포
-```
-
-### 3. 상태 모니터링
-```bash
-./monitor-ec2.sh            # 리소스 및 서비스 상태 확인
-```
-
-### 4. 개발 환경 (로컬)
-
-#### Backend 개발
+### 백엔드 (Spring Boot)
 ```bash
 cd backend/backend
-./mvnw spring-boot:run      # Maven 사용
+./gradlew bootRun
 ```
+백엔드 서버는 `http://localhost:8080`에서 실행됩니다.
 
-#### Frontend 개발
+### 프론트엔드 (React)
 ```bash
 cd frontend
-npm install
+npm install  # 처음 실행 시에만
 npm start
 ```
+프론트엔드 서버는 `http://localhost:3000`에서 실행됩니다.
 
-## 🌐 서비스 접근
+## API 문서
 
-| 서비스 | URL | 설명 |
-|--------|-----|------|
-| Frontend | http://localhost:3000 | React 앱 |
-| Backend API | http://localhost:8080 | REST API |
-| Health Check | http://localhost:8080/actuator/health | 서비스 상태 |
-| Swagger UI | http://localhost:8080/swagger-ui/ | API 문서 |
-| PostgreSQL | localhost:5433 | 데이터베이스 |
-| Redis | localhost:6379 | 캐시 서버 |
+백엔드 서버 실행 후 Swagger UI에서 API 문서를 확인할 수 있습니다:
+- URL: `http://localhost:8080/swagger-ui.html`
 
-## 📊 EC2 t3.small 최적화
+### 주요 API 엔드포인트
 
-### 배포 방식 비교
+#### 회원 관리
+- `GET /api/members` - 모든 회원 조회
+- `POST /api/members` - 새 회원 생성
+- `PUT /api/members/{id}/grade` - 회원 등급 변경
+- `DELETE /api/members/{id}` - 회원 삭제
 
-| 구분 | 초기 배포 | 무중단 재배포 |
-|------|-----------|---------------|
-| **PostgreSQL 데이터** | ✅ 보존 | ✅ 보존 |
-| **Redis 데이터** | ✅ 보존 | ✅ 보존 |
-| **애플리케이션** | 🔄 재생성 | 🔄 Blue-Green 교체 |
-| **다운타임** | ⚠️ 앱만 중단 | ✅ 무중단 |
-| **사용 시기** | 첫 배포, 문제 해결 | 일반 업데이트 |
+#### 예약 관리
+- `GET /api/reservations` - 모든 예약 조회
+- `POST /api/reservations` - 새 예약 생성
+- `GET /api/reservations/available` - 예약 가능한 슬롯 조회
+- `DELETE /api/reservations/{id}` - 예약 삭제
 
-### 메모리 최적화 설정
+#### 신청 관리
+- `POST /api/reservation-applications` - 예약 신청
+- `GET /api/reservation-applications/member/{memberId}` - 회원별 신청 조회
+- `PUT /api/reservation-applications/{id}/status` - 신청 상태 변경
+
+## 기술 스택
+
+### 백엔드
+- **Spring Boot 3.x**
+- **Java 17+**
+- **JPA/Hibernate**
+- **H2 Database** (개발용)
+- **Swagger/OpenAPI 3**
+
+### 프론트엔드
+- **React 18**
+- **TypeScript**
+- **React Router**
+- **React Query** (데이터 페칭)
+- **React Hook Form** (폼 관리)
+- **React Big Calendar** (달력 UI)
+- **Moment.js** (날짜 처리)
+- **Yup** (유효성 검증)
+- **Axios** (HTTP 클라이언트)
+
+## 개발 환경 설정
+
+### 필수 요구사항
+- **Java 17 이상**
+- **Node.js 16 이상**
+- **npm 또는 yarn**
+
+### 환경 설정
+1. 백엔드와 프론트엔드를 각각 별도의 터미널에서 실행
+2. 프론트엔드는 `proxy` 설정으로 백엔드 API에 자동 연결
+3. 개발 시 핫 리로드 지원
+
+## 프로젝트 특징
+
+### 🎨 UI/UX
+- 반응형 디자인
+- 직관적인 사용자 인터페이스
+- 이모지를 활용한 친근한 디자인
+- **📅 달력 기반 예약 시스템**
+  - 월/주/일 단위 보기 전환
+  - 드래그로 시간 선택
+  - 예약 상태 색상 구분
+  - 마우스 호버 효과
+
+### 🔧 개발 편의성
+- TypeScript로 타입 안전성 보장
+- React Query로 서버 상태 관리
+- Form 유효성 검증
+- 에러 처리 및 로딩 상태 관리
+
+### 🚀 확장 가능성
+- 컴포넌트 기반 아키텍처
+- 재사용 가능한 API 서비스
+- 확장 가능한 상태 관리
+
+## 트러블슈팅
+
+### 자주 발생하는 문제
+1. **포트 충돌**: 백엔드(8080), 프론트엔드(3000) 포트 확인
+2. **CORS 오류**: 백엔드 CORS 설정 확인
+3. **패키지 설치 오류**: `npm install` 또는 `yarn install` 재실행
+
+### 개발 팁
+- 백엔드를 먼저 실행한 후 프론트엔드 실행
+- API 변경 시 타입 정의 업데이트
+- React Query DevTools 활용 권장
+
+## 🚀 배포 가이드 (AWS EC2)
+
+### EC2 인스턴스 요구사항
+- **최소 사양**: t3.small (2GB RAM, 1 vCPU)
+- **권장 사양**: t3.medium (4GB RAM, 2 vCPU)
+- **OS**: Ubuntu 20.04 LTS 또는 Amazon Linux 2
+
+### 1단계: EC2 초기 설정
 ```bash
-# Node.js 메모리 제한
-NODE_OPTIONS="--max-old-space-size=1024"
-
-# Java JVM 최적화
-JAVA_OPTS="-Xms256m -Xmx1024m -XX:+UseSerialGC -XX:MaxRAMPercentage=50.0"
-
-# Maven 빌드 최적화
-MAVEN_OPTS="-Xmx512m -XX:+UseSerialGC"
+# 최초 1회 실행
+curl -fsSL https://raw.githubusercontent.com/Linejin/friendI/master/setup-ec2-initial.sh | bash
 ```
 
-### 데이터베이스 최적화
-- **PostgreSQL**: shared_buffers=64MB, max_connections=50
-- **Redis**: maxmemory=128mb, LRU 정책
-
-## 🧹 프로젝트 정리 내역
-
-### 제거된 파일들
-- ❌ **25개+ 중복 배포 스크립트** (build-*, deploy-*, fix-*, 등)
-- ❌ **Gradle 관련 파일** 완전 제거 (Maven 전용)
-- ❌ **중복 Docker Compose** 파일들
-- ❌ **중복 Dockerfile** 파일들
-- ❌ **빌드 아티팩트** (target/, build/, node_modules/)
-
-### 유지된 핵심 파일들
-- ✅ **5개 핵심 스크립트**만 유지
-- ✅ **단일 docker-compose.yml**
-- ✅ **최적화된 Dockerfile** 각 1개씩
-- ✅ **Maven pom.xml** (Gradle 완전 제거)
-
-## 🔧 유지보수
-
-### 정기 정리
+### 2단계: 프로젝트 배포
 ```bash
-./cleanup-resources.sh      # 주간 실행 권장
+# 프로젝트 클론
+git clone https://github.com/Linejin/friendI.git
+cd friendI
+
+# 권한 설정
+chmod +x *.sh
+./setup-permissions.sh
+
+# 초기 배포
+./deploy-initial.sh
 ```
 
-### 로그 확인
+### 3단계: 재배포 (무중단)
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
+# 무중단 재배포
+./redeploy-zero-downtime.sh
+
+# 또는 롤백
+./redeploy-zero-downtime.sh rollback
 ```
 
-### 데이터베이스 백업
+### 모니터링
 ```bash
-# PostgreSQL 백업
-docker exec friendi-postgres pg_dump -U friendlyi_user friendlyi > backup.sql
+# 시스템 모니터링
+./monitor-ec2.sh
 
-# Redis 백업 (자동 RDB 저장됨)
-docker exec friendi-redis redis-cli BGSAVE
+# 실시간 모니터링
+./monitor-ec2.sh --watch
+
+# 성능 리포트 생성
+./monitor-ec2.sh --report
 ```
 
-## 📈 성능 최적화
+### Docker 설정
 
-- **메모리 사용량**: < 1.5GB (t3.small 2GB 중)
-- **빌드 시간**: 초기 ~3분, 무중단 ~1분
-- **이미지 크기**: Backend ~200MB, Frontend ~50MB
-- **시작 시간**: Backend ~30초, Frontend ~10초
+#### 표준 환경 (t3.medium 이상)
+```bash
+docker-compose up -d
+```
 
-## 🎯 배포 모범 사례
+#### 저사양 환경 (t3.small)
+```bash
+docker-compose -f docker-compose.lowmem.yml up -d
+```
 
-1. **개발 → 테스트 → 배포** 순서 준수
-2. **무중단 재배포** 우선 사용
-3. **정기적 리소스 정리** (주 1회)
-4. **모니터링** 지속 확인
-5. **백업** 중요 데이터 보존
+### 접속 URL
+- **프론트엔드**: `http://[EC2-PUBLIC-IP]`
+- **백엔드 API**: `http://[EC2-PUBLIC-IP]:8080`
+- **Health Check**: `http://[EC2-PUBLIC-IP]:8080/actuator/health`
+- **Swagger UI**: `http://[EC2-PUBLIC-IP]:8080/swagger-ui.html`
 
----
+### 보안 그룹 설정
+AWS 콘솔에서 다음 포트를 열어주세요:
+- **SSH**: 22 (관리용)
+- **HTTP**: 80 (프론트엔드)
+- **Custom TCP**: 8080 (백엔드 API)
 
-> **Note**: 이 프로젝트는 EC2 t3.small 환경에 최적화되어 있으며, 더 큰 인스턴스에서는 메모리 제한을 조정할 수 있습니다.
+### 유용한 명령어
+```bash
+# 서비스 상태 확인
+docker-compose ps
+
+# 로그 확인
+docker-compose logs -f
+
+# 서비스 재시작
+docker-compose restart
+
+# 완전 재배포
+docker-compose down && docker-compose up -d --build
+```
+
+## 라이선스
+
+이 프로젝트는 학습 목적으로 제작되었습니다.

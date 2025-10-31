@@ -1,28 +1,12 @@
 import React, { useState } from 'react';
+import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
 import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Reservation } from '../types';
-
-// 안전한 import 방식 (타입 오류 방지)
-let Calendar: any, momentLocalizer: any, Views: any;
-
-try {
-  const BigCalendar = require('react-big-calendar');
-  Calendar = BigCalendar.Calendar;
-  momentLocalizer = BigCalendar.momentLocalizer;
-  Views = BigCalendar.Views;
-  
-  // CSS 로드
-  require('react-big-calendar/lib/css/react-big-calendar.css');
-} catch (error) {
-  console.error('Error loading react-big-calendar:', error);
-}
 
 // moment 한국어 설정
 moment.locale('ko');
-const localizer = momentLocalizer ? momentLocalizer(moment) : null;
-
-// 타입 정의
-type View = 'month' | 'week' | 'day' | 'agenda';
+const localizer = momentLocalizer(moment);
 
 interface ReservationCalendarProps {
   reservations: Reservation[];
@@ -35,42 +19,8 @@ const ReservationCalendar: React.FC<ReservationCalendarProps> = ({
   onSelectSlot,
   onSelectEvent
 }) => {
-  const [view, setView] = useState<View>('month');
+  const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
-
-  // 라이브러리 로드 실패 시 대체 UI
-  if (!Calendar || !localizer) {
-    return (
-      <div style={{ 
-        padding: '40px',
-        textAlign: 'center',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        border: '2px dashed #dee2e6'
-      }}>
-        <h3>📅 예약 달력</h3>
-        <p style={{ color: '#6c757d' }}>
-          달력 컴포넌트를 로드하는 중입니다...
-        </p>
-        <div style={{ marginTop: '20px' }}>
-          <h4>현재 예약 목록</h4>
-          {reservations.length === 0 ? (
-            <p>예약이 없습니다.</p>
-          ) : (
-            <ul style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>
-              {reservations.map(reservation => (
-                <li key={reservation.id} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
-                  <strong>{reservation.title}</strong><br />
-                  <small>날짜: {reservation.reservationDate}</small><br />
-                  <small>인원: {reservation.confirmedCount}/{reservation.maxCapacity}</small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   console.log('ReservationCalendar received reservations:', reservations); // 디버그용
 
@@ -202,22 +152,22 @@ const ReservationCalendar: React.FC<ReservationCalendarProps> = ({
         <h3>📅 예약 달력</h3>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
-            className={`button ${view === 'month' ? 'button-primary' : ''}`}
-            onClick={() => setView('month')}
+            className={`button ${view === Views.MONTH ? 'button-primary' : ''}`}
+            onClick={() => setView(Views.MONTH)}
             style={{ fontSize: '14px', padding: '5px 10px' }}
           >
             월
           </button>
           <button 
-            className={`button ${view === 'week' ? 'button-primary' : ''}`}
-            onClick={() => setView('week')}
+            className={`button ${view === Views.WEEK ? 'button-primary' : ''}`}
+            onClick={() => setView(Views.WEEK)}
             style={{ fontSize: '14px', padding: '5px 10px' }}
           >
             주
           </button>
           <button 
-            className={`button ${view === 'day' ? 'button-primary' : ''}`}
-            onClick={() => setView('day')}
+            className={`button ${view === Views.DAY ? 'button-primary' : ''}`}
+            onClick={() => setView(Views.DAY)}
             style={{ fontSize: '14px', padding: '5px 10px' }}
           >
             일
@@ -241,7 +191,7 @@ const ReservationCalendar: React.FC<ReservationCalendarProps> = ({
           date={date}
           onNavigate={setDate}
           onSelectSlot={onSelectSlot}
-          onSelectEvent={(event: any) => {onSelectEvent(event.resource);}}
+          onSelectEvent={(event) => {onSelectEvent(event.resource);}}
           selectable={true}
           eventPropGetter={eventStyleGetter}
           slotPropGetter={slotStyleGetter}
@@ -264,21 +214,21 @@ const ReservationCalendar: React.FC<ReservationCalendarProps> = ({
           time: '시간',
           event: '예약',
           noEventsInRange: '이 기간에는 예약이 없습니다.',
-          showMore: (total: number) => `+${total} 더보기`
+          showMore: (total) => `+${total} 더보기`
         }}
         formats={{
           dateFormat: 'D',
-          dayFormat: (date: Date, culture: any, localizer: any) =>
+          dayFormat: (date, culture, localizer) =>
             localizer?.format(date, 'dddd', culture) || '',
-          dayRangeHeaderFormat: ({ start, end }: any, culture: any, localizer: any) =>
+          dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
             `${localizer?.format(start, 'M월 D일', culture)} - ${localizer?.format(end, 'M월 D일', culture)}`,
-          monthHeaderFormat: (date: Date, culture: any, localizer: any) =>
+          monthHeaderFormat: (date, culture, localizer) =>
             localizer?.format(date, 'YYYY년 M월', culture) || '',
-          dayHeaderFormat: (date: Date, culture: any, localizer: any) =>
+          dayHeaderFormat: (date, culture, localizer) =>
             localizer?.format(date, 'M월 D일 dddd', culture) || '',
-          timeGutterFormat: (date: Date, culture: any, localizer: any) =>
+          timeGutterFormat: (date, culture, localizer) =>
             localizer?.format(date, 'HH:mm', culture) || '',
-          eventTimeRangeFormat: ({ start, end }: any, culture: any, localizer: any) =>
+          eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
             localizer?.format(start, 'HH:mm', culture) + ' - ' + localizer?.format(end, 'HH:mm', culture)
         }}
         />

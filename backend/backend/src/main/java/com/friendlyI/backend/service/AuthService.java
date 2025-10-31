@@ -1,5 +1,6 @@
 package com.friendlyI.backend.service;
 
+import com.friendlyI.backend.config.security.JwtTokenUtil;
 import com.friendlyI.backend.dto.LoginRequest;
 import com.friendlyI.backend.dto.LoginResponse;
 import com.friendlyI.backend.entity.Member;
@@ -21,6 +22,7 @@ public class AuthService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenUtil jwtTokenUtil;
 
     /**
      * 로그인 처리
@@ -36,8 +38,8 @@ public class AuthService {
             throw new RuntimeException("비밀번호가 일치하지 않습니다");
         }
 
-        // JWT 토큰 생성 (현재는 임시로 "dummy-token" 사용)
-        String token = "dummy-token-" + member.getId();
+        // JWT 토큰 생성
+        String token = jwtTokenUtil.generateToken(member.getLoginId(), member.getId(), member.getGrade());
 
         // 응답 생성
         return LoginResponse.builder()
@@ -64,7 +66,7 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("관리자 계정을 찾을 수 없습니다"));
 
         return LoginResponse.builder()
-                .token("dummy-token-" + admin.getId())
+                .token(jwtTokenUtil.generateToken(admin.getLoginId(), admin.getId(), admin.getGrade()))
                 .user(LoginResponse.UserInfo.builder()
                         .id(admin.getId())
                         .loginId(admin.getLoginId())

@@ -1,60 +1,63 @@
-# Git
-.git
-.gitignore
-.gitattributes
-
-# IDE
-.idea/
-*.iml
-.vscode/
-*.swp
-*.swo
-*~
-
-# Maven
+# Maven build files
 target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**
-!**/src/test/**
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
 
-# Gradle (legacy)
-_gradle_legacy/
-.gradle/
+# Legacy Gradle files (제거 예정)
 build/
+.gradle/
+gradle-app.setting
+
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Logs
 *.log
 logs/
 
-# Temporary files
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
-
-# Documentation
-*.md
-docs/
+# Git
+.git/
+.gitignore
+.gitattributes
 
 # Docker
-docker-compose*.yml
+Dockerfile
 .dockerignore
+docker-compose*.yml
+
+# Documentation
+README.md
+*.md
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Test coverage
-coverage/
-.nyc_output/
-
-# Node modules (if any frontend build process)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Test results (keep source but exclude compiled)
+# Test results
 target/surefire-reports/
 target/failsafe-reports/
+target/test-classes/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+.#*
+#*#

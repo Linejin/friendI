@@ -1,65 +1,66 @@
-# Multi-stage build optimized for disk space
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Backend Dockerfile - Maven with Java 21
+FROM eclipse-temurin:21-jdk-alpine AS build
 
+# Install required packages (Alpine Linux)
+RUN apk add --no-cache curl unzip
+
+# Set working directory
 WORKDIR /app
 
-# Install minimal build tools
-RUN apk add --no-cache --virtual .build-deps curl
+# 빌드 환경 최적화 - Maven용 (t3.small 환경)
+ENV MAVEN_OPTS="-Xmx768m -XX:+UseSerialGC -XX:MaxRAMPercentage=75"
+ENV JAVA_TOOL_OPTIONS="-Xmx768m -XX:+UseSerialGC -XX:MaxRAMPercentage=75"
 
-# Copy build files
+# Maven 캐시 최적화를 위한 단계별 복사
 COPY .mvn/ ./.mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x ./mvnw
+COPY mvnw ./
+COPY mvnw.cmd ./
+COPY pom.xml ./
 
-# Download dependencies with space optimization
-RUN ./mvnw dependency:go-offline -B --quiet \
-    && rm -rf ~/.m2/repository/org/springframework/boot/spring-boot-maven-plugin
+# Make mvnw executable and verify
+RUN chmod +x ./mvnw && ls -la ./mvnw
 
-# Copy and build with aggressive cleanup
+# 의존성 다운로드 (소스코드 변경과 분리)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
 COPY src/ ./src/
-RUN ./mvnw clean package -DskipTests -B --quiet \
-    -Dmaven.compile.fork=false \
-    -Dmaven.test.skip=true \
-    -Dmaven.repo.local=/tmp/.m2 \
-    && rm -rf /tmp/.m2 \
-    && rm -rf target/classes \
-    && rm -rf target/generated-sources \
-    && rm -rf target/maven-* \
-    && apk del .build-deps
 
-# Production stage
+# Build the application with optimized settings
+RUN ./mvnw clean package -DskipTests \
+    -B \
+    -Dmaven.compile.fork=false \
+    -Dmaven.test.skip=true
+
+# Production stage - 안정적인 JRE 이미지 사용
 FROM eclipse-temurin:21-jre-alpine
 
-WORKDIR /app
-
-# Install curl for health checks
+# Install curl for health checks (Alpine Linux)
 RUN apk add --no-cache curl
 
-# Create app user for security
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
+# Create app user (Alpine Linux 방식)
+RUN addgroup -g 1000 app && adduser -D -u 1000 -G app app
 
-# Copy the JAR from builder stage
-COPY --from=builder /app/target/backend-*.jar app.jar
+# Set working directory
+WORKDIR /app
 
-# Create directories for uploads and logs
-RUN mkdir -p /app/uploads /app/logs && \
-    chown -R appuser:appuser /app
+# Copy jar file from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Switch to non-root user
-USER appuser
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+# Change ownership to app user
+RUN chown -R app:app /app
+USER app
 
 # Expose port
 EXPOSE 8080
 
-# Environment variables with defaults (EC2 small optimized)
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV SERVER_PORT=8080
-ENV JAVA_OPTS="-Xms128m -Xmx512m -XX:+UseSerialGC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Run the application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Run the application with Java 21 specific optimizations
+ENTRYPOINT ["java", \
+    "--enable-native-access=ALL-UNNAMED", \
+    "-XX:+UseContainerSupport", \
+    "-XX:+UnlockExperimentalVMOptions", \
+    "-jar", "/app/app.jar"]

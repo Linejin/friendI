@@ -38,6 +38,19 @@ fi
 cd backend/backend
 echo "✅ Backend 디렉토리로 이동: $(pwd)"
 
+# Maven wrapper 파일 존재 확인 및 권한 부여
+if [ ! -f "./mvnw" ]; then
+    echo "❌ ./mvnw 파일을 찾을 수 없습니다."
+    exit 1
+fi
+
+# 실행 권한 확인 및 부여
+if [ ! -x "./mvnw" ]; then
+    echo "Maven wrapper에 실행 권한을 부여합니다..."
+    chmod +x ./mvnw
+    echo "✅ ./mvnw 실행 권한 부여 완료"
+fi
+
 if [ "$SKIP_BUILD" = false ]; then
     # 1. 로컬에서 Maven 빌드
     echo ""

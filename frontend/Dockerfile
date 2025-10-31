@@ -34,12 +34,17 @@ ENV REACT_APP_ENV=production
 ENV REACT_APP_API_BASE_URL=/api
 ENV REACT_APP_API_TIMEOUT=10000
 
-# Build the application with memory optimization and cleanup
-RUN export NODE_OPTIONS="--max-old-space-size=512" && \
-    npm run build:safe && \
-    rm -rf node_modules && \
-    npm cache clean --force && \
-    rm -rf ~/.npm
+# Build the application with ultra memory optimization
+RUN export NODE_OPTIONS="--max-old-space-size=256 --optimize-for-size" && \
+    export TSC_NONPOLLING_WATCHER=true && \
+    export DISABLE_ESLINT_PLUGIN=true && \
+    export SKIP_PREFLIGHT_CHECK=true && \
+    npm run build:minimal
+
+# Clean up after build to save space
+RUN rm -rf node_modules && \
+    npm cache clean --force 2>/dev/null || true && \
+    rm -rf ~/.npm 2>/dev/null || true
 
 # Production stage with nginx
 FROM nginx:alpine

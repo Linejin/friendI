@@ -272,10 +272,11 @@ deploy_services() {
         # Clear build cache between builds
         docker builder prune -f 2>/dev/null || true
         
-        # Build frontend
-        echo_info "프론트엔드 이미지 빌드 중... (메모리 최적화 모드)"
-        DOCKER_BUILDKIT=0 docker-compose -f "$compose_file" build --no-cache --memory=256m frontend || {
+        # Build frontend with extreme memory limits
+        echo_info "프론트엔드 이미지 빌드 중... (극한 메모리 최적화 모드)"
+        DOCKER_BUILDKIT=0 docker-compose -f "$compose_file" build --no-cache --memory=384m --memory-swap=512m frontend || {
             echo_error "프론트엔드 빌드 실패"
+            echo_info "메모리 부족으로 빌드 실패. 스왑 공간을 늘리거나 더 큰 인스턴스를 사용해주세요."
             return 1
         }
     elif [ "$available_mem" -lt 800 ]; then
@@ -290,8 +291,9 @@ deploy_services() {
         
         # Build frontend
         echo_info "프론트엔드 이미지 빌드 중..."
-        docker-compose -f "$compose_file" build --no-cache frontend || {
+        docker-compose -f "$compose_file" build --no-cache --memory=512m frontend || {
             echo_error "프론트엔드 빌드 실패"
+            echo_info "Node.js 빌드 실패. 메모리 부족이 원인일 수 있습니다."
             return 1
         }
     else

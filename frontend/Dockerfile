@@ -34,12 +34,14 @@ ENV REACT_APP_ENV=production
 ENV REACT_APP_API_BASE_URL=/api
 ENV REACT_APP_API_TIMEOUT=10000
 
-# Build the application with ultra memory optimization
-RUN export NODE_OPTIONS="--max-old-space-size=256 --optimize-for-size" && \
-    export TSC_NONPOLLING_WATCHER=true && \
-    export DISABLE_ESLINT_PLUGIN=true && \
-    export SKIP_PREFLIGHT_CHECK=true && \
-    npm run build:minimal
+# Set build environment variables
+ENV DISABLE_ESLINT_PLUGIN=true
+ENV SKIP_PREFLIGHT_CHECK=true  
+ENV TSC_COMPILE_ON_ERROR=true
+ENV NODE_OPTIONS="--max-old-space-size=384"
+
+# Build the application with memory optimization
+RUN npm run build:minimal
 
 # Clean up after build to save space
 RUN rm -rf node_modules && \

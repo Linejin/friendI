@@ -1,48 +1,41 @@
-# Frontend Dockerfile - Simplified and Optimized
+# Frontend Dockerfile - Minimal for disk space
 # Build stage
-FROM node:18-bullseye-slim AS build
+FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for native modules (Debian-based)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       python3 \
-       make \
-       g++ \
-       build-essential \
-       ca-certificates \
-       curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set npm configuration for better reliability
-RUN npm config set registry https://registry.npmjs.org/ && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm config set fetch-retries 5
+# Install minimal build tools for alpine (much smaller)
+RUN apk add --no-cache --virtual .build-deps \
+    python3 \
+    make \
+    g++ \
+    && npm config set registry https://registry.npmjs.org/
 
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies with error handling
-RUN npm cache clean --force && \
-    npm ci --only=production --ignore-scripts || \
-    npm install --legacy-peer-deps --no-optional || \
-    npm install --force
+# Install dependencies (simplified for space)
+RUN npm ci --only=production --no-audit --no-fund \
+    && npm cache clean --force
 
 # Copy source code
 COPY . .
 
 # Set environment variables for build
-ENV CI=false
-ENV TSC_COMPILE_ON_ERROR=true
-ENV SKIP_PREFLIGHT_CHECK=true
-ENV GENERATE_SOURCEMAP=false
-ENV REACT_APP_ENV=production
+ENV CI=false \
+    TSC_COMPILE_ON_ERROR=true \
+    SKIP_PREFLIGHT_CHECK=true \
+    GENERATE_SOURCEMAP=false \
+    REACT_APP_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=2048"
 
-# Build the application
-RUN npm run build:safe
+# Build the application and clean up
+RUN npm run build:safe \
+    && npm cache clean --force \
+    && apk del .build-deps \
+    && rm -rf node_modules \
+    && rm -rf /tmp/* /var/cache/apk/*
 
 # Production stage with nginx
 FROM nginx:alpine

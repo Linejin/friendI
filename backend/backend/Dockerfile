@@ -7,9 +7,10 @@ RUN apk add --no-cache curl unzip
 # Set working directory
 WORKDIR /app
 
-# 빌드 환경 최적화 - Maven용 (t3.small 환경)
-ENV MAVEN_OPTS="-Xmx768m -XX:+UseSerialGC -XX:MaxRAMPercentage=75"
-ENV JAVA_TOOL_OPTIONS="-Xmx768m -XX:+UseSerialGC -XX:MaxRAMPercentage=75"
+# 빌드 환경 최적화 - Maven용 (빌드 args로 동적 설정)
+ARG MAVEN_OPTS="-Xmx768m -XX:+UseSerialGC -XX:MaxRAMPercentage=75"
+ENV MAVEN_OPTS=${MAVEN_OPTS}
+ENV JAVA_TOOL_OPTIONS=${MAVEN_OPTS}
 
 # Maven 캐시 최적화를 위한 단계별 복사
 COPY .mvn/ ./.mvn/

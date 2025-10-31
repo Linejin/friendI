@@ -17,8 +17,10 @@ RUN npm config set registry https://registry.npmjs.org/ && \
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies with error handling
-RUN npm ci || npm install
+# Install dependencies with error handling and memory optimization
+RUN npm config set maxsockets 1 && \
+    npm config set registry https://registry.npmjs.org/ && \
+    (npm ci --no-optional --prefer-offline || npm install --no-optional --prefer-offline)
 
 # Copy source code
 COPY . .
@@ -32,8 +34,8 @@ ENV REACT_APP_ENV=production
 ENV REACT_APP_API_BASE_URL=/api
 ENV REACT_APP_API_TIMEOUT=10000
 
-# Build the application
-RUN npm run build:safe
+# Build the application with memory optimization
+RUN export NODE_OPTIONS="--max-old-space-size=512" && npm run build:safe
 
 # Production stage with nginx
 FROM nginx:alpine

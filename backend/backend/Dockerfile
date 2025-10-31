@@ -1,31 +1,31 @@
-# Multi-stage build for optimized production image
+# Multi-stage build optimized for disk space
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Install curl and tar for build utilities
-RUN apk add --no-cache curl tar
+# Install minimal build tools
+RUN apk add --no-cache --virtual .build-deps curl
 
-# Copy Maven wrapper and pom.xml for dependency caching
+# Copy build files
 COPY .mvn/ ./.mvn/
-COPY mvnw ./
-COPY mvnw.cmd ./
-COPY pom.xml ./
-
-# Make mvnw executable
+COPY mvnw pom.xml ./
 RUN chmod +x ./mvnw
 
-# Download dependencies (for better layer caching)
-RUN ./mvnw dependency:go-offline -B
+# Download dependencies with space optimization
+RUN ./mvnw dependency:go-offline -B --quiet \
+    && rm -rf ~/.m2/repository/org/springframework/boot/spring-boot-maven-plugin
 
-# Copy source code
+# Copy and build with aggressive cleanup
 COPY src/ ./src/
-
-# Build the application (skip tests for faster build)
-RUN ./mvnw clean package -DskipTests -B \
+RUN ./mvnw clean package -DskipTests -B --quiet \
     -Dmaven.compile.fork=false \
     -Dmaven.test.skip=true \
-    -Dspring-boot.repackage.skip=false
+    -Dmaven.repo.local=/tmp/.m2 \
+    && rm -rf /tmp/.m2 \
+    && rm -rf target/classes \
+    && rm -rf target/generated-sources \
+    && rm -rf target/maven-* \
+    && apk del .build-deps
 
 # Production stage
 FROM eclipse-temurin:21-jre-alpine

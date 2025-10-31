@@ -1,12 +1,32 @@
-# 풀스택 배포 재시작 스크립트 (PowerShell)
+#!/bin/bash
+# 풀스택 배포 재시작 스크립트 (Linux/macOS)
 
-param(
-    [int]$FrontendPort = 3000,
-    [int]$FrontendHttpsPort = 3443
-)
+# 옵션 파싱
+FRONTEND_PORT=3000
+FRONTEND_HTTPS_PORT=3443
 
-Write-Host "🚀 풀스택 배포 재시작 중..." -ForegroundColor Green
-Write-Host "================================" -ForegroundColor Green
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --port)
+            FRONTEND_PORT="$2"
+            shift 2
+            ;;
+        --https-port)
+            FRONTEND_HTTPS_PORT="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--port PORT] [--https-port HTTPS_PORT]"
+            exit 1
+            ;;
+    esac
+done
+
+echo "🚀 풀스택 배포 재시작 중..."
+echo "Frontend Port: $FRONTEND_PORT"
+echo "Frontend HTTPS Port: $FRONTEND_HTTPS_PORT"
+echo "================================"
 
 try {
     # 1. 현재 컨테이너 상태 확인

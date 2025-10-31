@@ -1,0 +1,75 @@
+# Docker Compose for FriendlyI - Minimal Configuration
+# For extremely limited environments (t3.nano, 512MB RAM)
+
+services:
+  # Backend Service - Ultra Lightweight
+  backend:
+    build:
+      context: ./backend/backend
+      dockerfile: Dockerfile
+      args:
+        - MAVEN_OPTS=-Xmx256m -XX:+UseSerialGC -XX:TieredStopAtLevel=1
+    container_name: friendlyi-backend-minimal
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xmx256m -Xms64m -XX:+UseSerialGC -XX:MaxRAMPercentage=50 -XX:+UseContainerSupport -XX:TieredStopAtLevel=1
+      - TZ=Asia/Seoul
+      - DB_USERNAME=sa
+      - DB_PASSWORD=
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=friendlyi2025!
+      - JWT_SECRET=FriendlyI-Production-JWT-Secret-Key-2025-AWS-EC2-Deployment!#$
+      - H2_CONSOLE_ENABLED=false
+      - SERVER_TOMCAT_MAX_THREADS=20
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    volumes:
+      - backend_data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 90s
+      timeout: 20s
+      retries: 3
+      start_period: 180s
+
+  # Frontend Service - Ultra Lightweight
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: friendlyi-frontend-minimal
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+
+# Networks
+networks:
+  friendlyi-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  backend_data:
+    driver: local

@@ -33,7 +33,7 @@
     "start:prod": "REACT_APP_ENV=production react-scripts start",
     "build": "react-scripts build",
     "build:safe": "CI=false DISABLE_ESLINT_PLUGIN=true TSC_COMPILE_ON_ERROR=true SKIP_PREFLIGHT_CHECK=true react-scripts build",
-    "build:minimal": "CI=false DISABLE_ESLINT_PLUGIN=true SKIP_PREFLIGHT_CHECK=true REACT_APP_DISABLE_TYPECHECK=true react-scripts build",
+    "build:minimal": "react-scripts build",
     "build:dev": "REACT_APP_ENV=development react-scripts build",
     "build:prod": "REACT_APP_ENV=production react-scripts build",
     "test": "react-scripts test",

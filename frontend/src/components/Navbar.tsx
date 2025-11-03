@@ -13,6 +13,97 @@ const Navbar: React.FC = () => {
 
   // 관리자 여부 확인
   const isAdmin = user?.grade === 'ROOSTER';
+  
+  // 관리자 페이지 여부 확인
+  const isAdminPage = location.pathname.startsWith('/admin') || 
+                      location.pathname.startsWith('/members');
+
+  // 메뉴 생성 함수
+  const renderNavMenu = () => {
+    const commonMenus = [
+      { path: '/', label: '🏠 홈', isHome: true },
+      { path: '/profile', label: '👤 내 정보' }
+    ];
+
+    if (isAdminPage && isAdmin) {
+      // 관리자 페이지에서는 관리자 메뉴 전체 표시
+      return (
+        <>
+          <li>
+            <Link to="/" className="nav-link">🏠 홈</Link>
+          </li>
+          <li className="nav-divider">
+            <span className="nav-section-title">관리자 메뉴</span>
+          </li>
+          <li>
+            <Link 
+              to="/admin" 
+              className={`nav-link admin-link ${location.pathname === '/admin' ? 'active' : ''}`}
+            >
+              🛠️ 대시보드
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/members" 
+              className={`nav-link admin-link ${location.pathname === '/members' ? 'active' : ''}`}
+            >
+              👥 회원관리
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/reservations" 
+              className={`nav-link admin-link ${location.pathname === '/reservations' ? 'active' : ''}`}
+            >
+              📅 예약관리
+            </Link>
+          </li>
+          <li>
+            <Link to="/profile" className="nav-link">👤 내 정보</Link>
+          </li>
+        </>
+      );
+    } else {
+      // 일반 페이지에서는 기본 메뉴만 표시
+      return (
+        <>
+          <li>
+            <Link 
+              to="/" 
+              className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+            >
+              🏠 홈
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/reservations" 
+              className={`nav-link ${location.pathname === '/reservations' ? 'active' : ''}`}
+            >
+              📅 {isAdmin ? '예약관리' : '예약 참가'}
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/profile" 
+              className={`nav-link ${location.pathname.startsWith('/profile') ? 'active' : ''}`}
+            >
+              👤 내 정보
+            </Link>
+          </li>
+          {/* 관리자라면 관리자 페이지 링크 추가 */}
+          {isAdmin && (
+            <li>
+              <Link to="/admin" className="nav-link admin-link">
+                🛠️ 관리자 페이지
+              </Link>
+            </li>
+          )}
+        </>
+      );
+    }
+  };
 
   return (
     <nav className="navbar">
@@ -24,72 +115,7 @@ const Navbar: React.FC = () => {
         {isAuthenticated ? (
           <>
             <ul className="navbar-nav">
-              {/* 공통 메뉴 */}
-              <li>
-                <Link 
-                  to="/" 
-                  className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-                >
-                  🏠 홈
-                </Link>
-              </li>
-              
-              {/* 관리자 전용 메뉴 */}
-              {isAdmin && (
-                <>
-                  <li className="nav-divider">
-                    <span className="nav-section-title">관리자 메뉴</span>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/admin" 
-                      className={`nav-link admin-link ${location.pathname === '/admin' ? 'active' : ''}`}
-                    >
-                      🛠️ 대시보드
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/members" 
-                      className={`nav-link admin-link ${location.pathname === '/members' ? 'active' : ''}`}
-                    >
-                      👥 회원관리
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/reservations" 
-                      className={`nav-link admin-link ${location.pathname === '/reservations' ? 'active' : ''}`}
-                    >
-                      📅 예약관리
-                    </Link>
-                  </li>
-                </>
-              )}
-              
-              {/* 일반 사용자 메뉴 */}
-              {!isAdmin && (
-                <>
-                  <li>
-                    <Link 
-                      to="/reservations" 
-                      className={`nav-link ${location.pathname === '/reservations' ? 'active' : ''}`}
-                    >
-                      📅 예약 참가
-                    </Link>
-                  </li>
-                </>
-              )}
-              
-              {/* 공통 메뉴 */}
-              <li>
-                <Link 
-                  to="/profile" 
-                  className={`nav-link ${location.pathname === '/profile' ? 'active' : ''}`}
-                >
-                  👤 내 정보
-                </Link>
-              </li>
+              {renderNavMenu()}
             </ul>
             
             <div className="navbar-user">

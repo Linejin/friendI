@@ -38,6 +38,8 @@ const MembersPage: React.FC = () => {
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [showEditToast, setShowEditToast] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // 페이지당 항목 수
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -118,20 +120,40 @@ const MembersPage: React.FC = () => {
     resolver: yupResolver(editMemberSchema)
   });
 
-  // 검색어 변경 핸들러
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchKeyword(e.target.value);
-  };
-
-  // 검색 초기화
-  const handleClearSearch = () => {
-    setSearchKeyword('');
-  };
-
   // 표시할 회원 목록 결정
-  const displayMembers = searchKeyword.trim() 
+  const allMembers = searchKeyword.trim() 
     ? (searchResults || []) 
     : (members || []);
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(allMembers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayMembers = allMembers.slice(startIndex, endIndex);
+
+  // 페이지 변경 시 맨 위로 스크롤
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 검색 시 첫 페이지로 이동
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchKeyword(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // 검색 초기화 시 첫 페이지로 이동
+  const handleClearSearch = () => {
+    setSearchKeyword('');
+    setCurrentPage(1);
+  };
+
+  // 페이지당 항목 수 변경
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
 
   const onSubmit = (data: MemberCreateRequest) => {
     createMemberMutation.mutate(data);
@@ -237,7 +259,26 @@ const MembersPage: React.FC = () => {
 
       <div className="card">
         <div className="members-list-header">
-          <h3>회원 목록 ({members?.length || 0}명)</h3>
+          <div className="members-list-title">
+            <h3>회원 목록 ({allMembers?.length || 0}명)</h3>
+            {allMembers && allMembers.length > 0 && (
+              <div className="items-per-page-selector">
+                <label htmlFor="itemsPerPage">페이지당 </label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="items-per-page-select"
+                >
+                  <option value={5}>5개</option>
+                  <option value={10}>10개</option>
+                  <option value={20}>20개</option>
+                  <option value={50}>50개</option>
+                </select>
+                <label> 표시</label>
+              </div>
+            )}
+          </div>
           <button 
             className="button button-primary"
             onClick={() => setShowForm(!showForm)}
@@ -424,6 +465,64 @@ const MembersPage: React.FC = () => {
           <div style={{ textAlign: 'center', padding: '50px', color: '#6c757d' }}>
             <h3>등록된 회원이 없습니다</h3>
             <p>새 회원을 등록해보세요!</p>
+          </div>
+        )}
+
+        {/* 페이지네이션 */}
+        {displayMembers && displayMembers.length > 0 && totalPages > 1 && (
+          <div className="pagination-container">
+            <div className="pagination">
+              <button
+                className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                ‹ 이전
+              </button>
+              
+              {/* 페이지 번호들 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                // 현재 페이지 주변 5개 페이지만 표시
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      className={`pagination-btn ${page === currentPage ? 'active' : ''}`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  page === currentPage - 3 || 
+                  page === currentPage + 3
+                ) {
+                  return <span key={page} className="pagination-ellipsis">...</span>;
+                }
+                return null;
+              })}
+              
+              <button
+                className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                다음 ›
+              </button>
+            </div>
+            
+            <div className="pagination-info">
+              {allMembers.length > 0 && (
+                <span>
+                  전체 {allMembers.length}명 중 {startIndex + 1}-{Math.min(endIndex, allMembers.length)}명 표시
+                  ({currentPage}/{totalPages} 페이지)
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

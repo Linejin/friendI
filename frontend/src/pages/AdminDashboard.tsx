@@ -56,12 +56,9 @@ const AdminDashboard: React.FC = () => {
         <div className="management-card">
           <h3>👥 회원 관리</h3>
           <p>회원 등록, 정보 조회, 등급 관리를 통해<br />체계적인 회원 운영을 지원합니다</p>
-          <button 
-            className="management-button management-button-primary"
-            onClick={() => alert('회원 관리 페이지는 개발 중입니다.')}
-          >
+          <Link to="/members" className="management-button management-button-primary">
             회원 관리하기
-          </button>
+          </Link>
         </div>
 
         <div className="management-card">
@@ -117,13 +114,13 @@ const AdminDashboard: React.FC = () => {
         <div className="card">
           <h3>⚡ 빠른 액션</h3>
           <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button 
+            <Link 
+              to="/members"
               className="button button-primary" 
-              style={{ textAlign: 'center' }}
-              onClick={() => alert('신규 회원 등록 기능은 개발 중입니다.')}
+              style={{ textAlign: 'center', textDecoration: 'none' }}
             >
               신규 회원 등록
-            </button>
+            </Link>
             <button 
               className="button button-success" 
               style={{ textAlign: 'center' }}

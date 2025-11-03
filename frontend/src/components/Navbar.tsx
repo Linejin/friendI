@@ -14,6 +14,17 @@ const Navbar: React.FC = () => {
   // 관리자 여부 확인
   const isAdmin = user?.grade === 'ROOSTER';
   
+  // 디버그 정보 (개발 환경에서만)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Navbar Debug:', {
+      user,
+      isAuthenticated,
+      isAdmin,
+      userGrade: user?.grade,
+      pathname: location.pathname
+    });
+  }
+  
   // 관리자 페이지 여부 확인
   const isAdminPage = location.pathname.startsWith('/admin') || 
                       location.pathname.startsWith('/members');

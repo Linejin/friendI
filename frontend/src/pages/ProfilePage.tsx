@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
+import { Link } from 'react-router-dom';
 import { reservationService } from '../api/reservations';
 import { memberService } from '../api/members';
 import { useAuth } from '../contexts/AuthContext';
@@ -108,18 +109,57 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div style={{ padding: styles.containerPadding }}>
-      <div className="page-header" style={{ marginBottom: styles.marginBottom }}>
-        <h1 className="page-title" style={{ 
-          fontSize: styles.titleSize,
-          margin: `0 0 ${styles.gap} 0`
-        }}>👤 내 정보</h1>
-        <p className="page-description" style={{
-          fontSize: styles.bodySize,
-          margin: 0,
-          lineHeight: '1.5'
-        }}>
-          프로필 정보와 활동 내역을 확인할 수 있습니다.
-        </p>
+      <div className="page-header" style={{ 
+        marginBottom: styles.marginBottom,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        flexDirection: screenSize.width < 768 ? 'column' : 'row',
+        gap: styles.gap
+      }}>
+        <div>
+          <h1 className="page-title" style={{ 
+            fontSize: styles.titleSize,
+            margin: `0 0 ${styles.gap} 0`
+          }}>👤 내 정보</h1>
+          <p className="page-description" style={{
+            fontSize: styles.bodySize,
+            margin: 0,
+            lineHeight: '1.5'
+          }}>
+            프로필 정보와 활동 내역을 확인할 수 있습니다.
+          </p>
+        </div>
+        
+        {/* 수정 버튼 */}
+        <Link
+          to="/profile/edit"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '6px',
+            fontSize: styles.bodySize,
+            fontWeight: 'bold',
+            transition: 'background-color 0.2s',
+            whiteSpace: 'nowrap',
+            alignSelf: screenSize.width < 768 ? 'stretch' : 'flex-start',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#0056b3';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#007bff';
+          }}
+        >
+          <span>✏️</span>
+          <span>정보 수정</span>
+        </Link>
       </div>
 
       {/* 프로필 정보 */}

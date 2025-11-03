@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
 import ReservationsPage from './pages/ReservationsPage';
 import ProfilePage from './pages/ProfilePage';
+import EditProfilePage from './pages/EditProfilePage';
 import SecurityTestPage from './pages/SecurityTestPage';
 import './App.css';
 
@@ -48,6 +49,11 @@ const AppContent: React.FC = () => {
                 <Route path="/profile" element={
                   <ProtectedRoute>
                     <ProfilePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile/edit" element={
+                  <ProtectedRoute>
+                    <EditProfilePage />
                   </ProtectedRoute>
                 } />
                 <Route path="/security-test" element={

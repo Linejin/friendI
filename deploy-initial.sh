@@ -379,7 +379,7 @@ show_deployment_info() {
     # Get public IP
     PUBLIC_IP=$(curl -s http://checkip.amazonaws.com/ || echo "확인 불가")
     
-    echo "  - Frontend: http://$PUBLIC_IP"
+    echo "  - Frontend: http://$PUBLIC_IP:3000"
     echo "  - Backend API: http://$PUBLIC_IP:8080"
     echo "  - Health Check: http://$PUBLIC_IP:8080/actuator/health"
     
@@ -395,8 +395,8 @@ show_deployment_info() {
     echo "  - 서비스 중지: docker-compose down"
     echo
     echo_warning "보안 그룹 설정을 확인해 주세요:"
-    echo "  - HTTP (80) 포트 열기"
-    echo "  - Custom TCP (8080) 포트 열기"
+    echo "  - Custom TCP (3000) 포트 열기 (프론트엔드)"
+    echo "  - Custom TCP (8080) 포트 열기 (백엔드)"
 }
 
 # Main deployment function

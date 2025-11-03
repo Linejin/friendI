@@ -50,7 +50,7 @@ services:
       dockerfile: Dockerfile
     container_name: friendlyi-frontend-minimal
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       backend:
         condition: service_started

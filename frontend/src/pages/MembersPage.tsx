@@ -195,7 +195,7 @@ const MembersPage: React.FC = () => {
 
       {/* 검색 및 컨트롤 영역 */}
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="search-controls">
           <div className="search-container">
             <input
               type="text"
@@ -214,6 +214,7 @@ const MembersPage: React.FC = () => {
           <button
             onClick={() => setShowForm(!showForm)}
             className="button button-primary"
+            style={{ whiteSpace: 'nowrap' }}
           >
             {showForm ? '취소' : '새 회원 추가'}
           </button>
@@ -235,11 +236,12 @@ const MembersPage: React.FC = () => {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="members-list-header">
           <h3>회원 목록 ({members?.length || 0}명)</h3>
           <button 
             className="button button-primary"
             onClick={() => setShowForm(!showForm)}
+            style={{ whiteSpace: 'nowrap' }}
           >
             {showForm ? '취소' : '새 회원 등록'}
           </button>
@@ -318,63 +320,105 @@ const MembersPage: React.FC = () => {
 
         {displayMembers && displayMembers.length > 0 ? (
           <div className="card">
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>이름</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>로그인 ID</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>등급</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>이메일</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>전화번호</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>가입일</th>
-                  <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayMembers.map((member: Member) => (
-                  <tr key={member.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6' }}>
-                      <strong>{member.name}</strong>
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6', color: '#6c757d' }}>
-                      @{member.loginId}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6' }}>
-                      <GradeBadge grade={member.grade} />
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6', fontSize: '14px' }}>
-                      {member.email}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6', fontSize: '14px' }}>
-                      {member.phoneNumber}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6', fontSize: '14px', color: '#6c757d' }}>
-                      {new Date(member.createdAt).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                        <button
-                          className="button button-primary"
-                          style={{ fontSize: '12px', padding: '5px 10px' }}
-                          onClick={() => handleEditMember(member)}
-                          disabled={updateMemberMutation.isLoading}
-                        >
-                          수정
-                        </button>
-                        <button
-                          className="button button-danger"
-                          style={{ fontSize: '12px', padding: '5px 10px' }}
-                          onClick={() => handleDeleteMember(member.id)}
-                          disabled={deleteMemberMutation.isLoading}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </td>
+            {/* 데스크톱 테이블 뷰 */}
+            <div className="members-table-container">
+              <table className="members-table">
+                <thead>
+                  <tr>
+                    <th>이름</th>
+                    <th>로그인 ID</th>
+                    <th>등급</th>
+                    <th>이메일</th>
+                    <th>전화번호</th>
+                    <th>가입일</th>
+                    <th>액션</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {displayMembers.map((member: Member) => (
+                    <tr key={member.id}>
+                      <td><strong>{member.name}</strong></td>
+                      <td style={{ color: '#6c757d' }}>@{member.loginId}</td>
+                      <td><GradeBadge grade={member.grade} /></td>
+                      <td style={{ fontSize: '14px' }}>{member.email}</td>
+                      <td style={{ fontSize: '14px' }}>{member.phoneNumber}</td>
+                      <td style={{ fontSize: '14px', color: '#6c757d' }}>
+                        {new Date(member.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <div className="member-actions">
+                          <button
+                            className="button button-primary"
+                            style={{ fontSize: '12px', padding: '5px 10px' }}
+                            onClick={() => handleEditMember(member)}
+                            disabled={updateMemberMutation.isLoading}
+                          >
+                            수정
+                          </button>
+                          <button
+                            className="button button-danger"
+                            style={{ fontSize: '12px', padding: '5px 10px' }}
+                            onClick={() => handleDeleteMember(member.id)}
+                            disabled={deleteMemberMutation.isLoading}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 모바일 카드 뷰 */}
+            <div className="members-mobile-cards">
+              {displayMembers.map((member: Member) => (
+                <div key={member.id} className="member-card">
+                  <div className="member-card-header">
+                    <div>
+                      <div className="member-card-name">{member.name}</div>
+                      <div className="member-card-id">@{member.loginId}</div>
+                    </div>
+                    <GradeBadge grade={member.grade} />
+                  </div>
+                  
+                  <div className="member-card-info">
+                    <div className="member-info-row">
+                      <span className="member-info-label">이메일</span>
+                      <span className="member-info-value">{member.email}</span>
+                    </div>
+                    <div className="member-info-row">
+                      <span className="member-info-label">전화번호</span>
+                      <span className="member-info-value">{member.phoneNumber}</span>
+                    </div>
+                    <div className="member-info-row">
+                      <span className="member-info-label">가입일</span>
+                      <span className="member-info-value">
+                        {new Date(member.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="member-card-actions">
+                    <button
+                      className="button button-primary"
+                      onClick={() => handleEditMember(member)}
+                      disabled={updateMemberMutation.isLoading}
+                    >
+                      수정
+                    </button>
+                    <button
+                      className="button button-danger"
+                      onClick={() => handleDeleteMember(member.id)}
+                      disabled={deleteMemberMutation.isLoading}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '50px', color: '#6c757d' }}>

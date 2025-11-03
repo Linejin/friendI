@@ -384,3 +384,214 @@
     align-items: stretch;
   }
 }
+
+/* ===== 회원관리 페이지 전용 스타일 ===== */
+.search-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 20px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.search-loading {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.search-info {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #ffcdd2;
+}
+
+.members-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 1rem;
+}
+
+/* 회원 테이블 반응형 */
+.members-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.members-table th,
+.members-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.members-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.members-table td:last-child {
+  text-align: center;
+}
+
+.member-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 모바일에서는 카드 레이아웃으로 변경 */
+@media (max-width: 768px) {
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .search-container {
+    max-width: none;
+    margin-bottom: 0;
+  }
+  
+  .members-list-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .members-table-container {
+    display: none;
+  }
+  
+  .members-mobile-cards {
+    display: block;
+  }
+  
+  .member-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+  }
+  
+  .member-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .member-card-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  .member-card-id {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+  
+  .member-card-info {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .member-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+  }
+  
+  .member-info-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  .member-info-value {
+    font-size: 0.9rem;
+    color: #495057;
+  }
+  
+  .member-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: stretch;
+  }
+  
+  .member-card-actions .button {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .members-mobile-cards {
+    display: none;
+  }
+}

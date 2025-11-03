@@ -161,7 +161,8 @@ const MembersPage: React.FC = () => {
   };
 
   const handleGradeUpgrade = (memberId: number, currentGrade: MemberGrade) => {
-    const grades = Object.values(MemberGrade);
+    // ES5 compatible: manual enum to array conversion
+    const grades = [MemberGrade.EGG, MemberGrade.HATCHING, MemberGrade.CHICK, MemberGrade.YOUNG_BIRD, MemberGrade.ROOSTER];
     const currentIndex = grades.indexOf(currentGrade);
     if (currentIndex < grades.length - 1) {
       const nextGrade = grades[currentIndex + 1];

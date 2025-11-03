@@ -88,14 +88,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     if (isOpen) {
       const dateToUse = initialDate || new Date();
       
+      // Helper function for padding (ES5 compatible)
+      const padZero = (num: number): string => {
+        return num < 10 ? `0${num}` : `${num}`;
+      };
+      
       // 로컬 시간대를 고려한 날짜 문자열 생성
       const year = dateToUse.getFullYear();
-      const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
-      const day = String(dateToUse.getDate()).padStart(2, '0');
+      const month = padZero(dateToUse.getMonth() + 1);
+      const day = padZero(dateToUse.getDate());
       const dateString = `${year}-${month}-${day}`;
       
       const timeString = initialDate 
-        ? `${initialDate.getHours().toString().padStart(2, '0')}:${initialDate.getMinutes().toString().padStart(2, '0')}`
+        ? `${padZero(initialDate.getHours())}:${padZero(initialDate.getMinutes())}`
         : '10:00';
       
       console.log('📅 Setting form values:');

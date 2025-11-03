@@ -16,12 +16,19 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xmx768m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75
       - TZ=Asia/Seoul
-      - DB_USERNAME=sa
-      - DB_PASSWORD=
+      - DB_URL=jdbc:postgresql://postgres:5432/friendlyi
+      - DB_USERNAME=friendlyi
+      - DB_PASSWORD=friendlyi123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=friendlyi2025!
       - JWT_SECRET=FriendlyI-Production-JWT-Secret-Key-2025-AWS-EC2-Deployment!#$
-      - H2_CONSOLE_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - backend_data:/app/data
       - ./logs:/app/logs
@@ -48,6 +55,56 @@ services:
     ports:
       - "3000:80"
 
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: friendlyi-postgres
+    environment:
+      POSTGRES_DB: friendlyi
+      POSTGRES_USER: friendlyi
+      POSTGRES_PASSWORD: friendlyi123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friendlyi -d friendlyi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: friendlyi-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    command: redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru
+
 networks:
   friendlyi-network:
     driver: bridge
@@ -55,4 +112,6 @@ networks:
 
 volumes:
   backend_data:
+    driver: local
+  postgres_data:
     driver: local

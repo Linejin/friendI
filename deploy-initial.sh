@@ -175,11 +175,14 @@ COMPOSE_PROJECT_NAME=$PROJECT_NAME
 JAVA_OPTS=-Xmx768m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport
 SPRING_PROFILES_ACTIVE=docker
 
-# Database Configuration (H2 for Docker)
-DB_USERNAME=sa
-DB_PASSWORD=
-H2_CONSOLE_ENABLED=false
-H2_CONSOLE_WEB_ALLOW_OTHERS=false
+# Database Configuration (PostgreSQL for Docker)
+DB_URL=jdbc:postgresql://postgres:5432/friendlyi
+DB_USERNAME=friendlyi
+DB_PASSWORD=friendlyi123
+
+# Redis Configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
 
 # Security Configuration
 ADMIN_USERNAME=admin
@@ -382,10 +385,8 @@ show_deployment_info() {
     echo "  - Frontend: http://$PUBLIC_IP:3000"
     echo "  - Backend API: http://$PUBLIC_IP:8080"
     echo "  - Health Check: http://$PUBLIC_IP:8080/actuator/health"
-    
-    if grep -q "spring.h2.console.enabled=true" backend/backend/src/main/resources/application-docker.properties; then
-        echo "  - H2 Database Console: http://$PUBLIC_IP:8080/h2-console"
-    fi
+    echo "  - PostgreSQL: $PUBLIC_IP:5432 (friendlyi/friendlyi123)"
+    echo "  - Redis: $PUBLIC_IP:6379"
     
     echo
     echo_info "유용한 명령어:"
@@ -397,6 +398,8 @@ show_deployment_info() {
     echo_warning "보안 그룹 설정을 확인해 주세요:"
     echo "  - Custom TCP (3000) 포트 열기 (프론트엔드)"
     echo "  - Custom TCP (8080) 포트 열기 (백엔드)"
+    echo "  - Custom TCP (5432) 포트 열기 (PostgreSQL, 옵션)"
+    echo "  - Custom TCP (6379) 포트 열기 (Redis, 옵션)"
 }
 
 # Main deployment function

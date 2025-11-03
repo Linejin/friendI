@@ -16,14 +16,21 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xmx256m -Xms64m -XX:+UseSerialGC -XX:MaxRAMPercentage=50 -XX:+UseContainerSupport -XX:TieredStopAtLevel=1 -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
       - TZ=Asia/Seoul
-      - DB_USERNAME=sa
-      - DB_PASSWORD=
+      - DB_URL=jdbc:postgresql://postgres:5432/friendlyi
+      - DB_USERNAME=friendlyi
+      - DB_PASSWORD=friendlyi123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=friendlyi2025!
       - JWT_SECRET=FriendlyI-Production-JWT-Secret-Key-2025-AWS-EC2-Deployment!#$
-      - H2_CONSOLE_ENABLED=false
       - SERVER_TOMCAT_MAX_THREADS=20
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - backend_data:/app/data
       - ./logs:/app/logs
@@ -64,6 +71,57 @@ services:
         reservations:
           memory: 32M
 
+  # PostgreSQL Database (Minimal)
+  postgres:
+    image: postgres:15-alpine
+    container_name: friendlyi-postgres-minimal
+    environment:
+      POSTGRES_DB: friendlyi
+      POSTGRES_USER: friendlyi
+      POSTGRES_PASSWORD: friendlyi123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friendlyi -d friendlyi"]
+      interval: 60s
+      timeout: 15s
+      retries: 2
+    deploy:
+      resources:
+        limits:
+          memory: 96M
+        reservations:
+          memory: 48M
+    command: postgres -c shared_buffers=16MB -c effective_cache_size=32MB -c work_mem=1MB -c max_connections=20
+
+  # Redis Cache (Minimal)
+  redis:
+    image: redis:7-alpine
+    container_name: friendlyi-redis-minimal
+    ports:
+      - "6379:6379"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 60s
+      timeout: 15s
+      retries: 2
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+        reservations:
+          memory: 24M
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru --save ""
+
 # Networks
 networks:
   friendlyi-network:
@@ -72,4 +130,6 @@ networks:
 # Volumes
 volumes:
   backend_data:
+    driver: local
+  postgres_data:
     driver: local

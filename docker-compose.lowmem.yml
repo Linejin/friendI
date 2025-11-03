@@ -16,12 +16,19 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xmx448m -Xms128m -XX:+UseSerialGC -XX:MaxRAMPercentage=55 -XX:+UseContainerSupport
       - TZ=Asia/Seoul
-      - DB_USERNAME=sa
-      - DB_PASSWORD=
+      - DB_URL=jdbc:postgresql://postgres:5432/friendlyi
+      - DB_USERNAME=friendlyi
+      - DB_PASSWORD=friendlyi123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=friendlyi2025!
       - JWT_SECRET=FriendlyI-Production-JWT-Secret-Key-2025-AWS-EC2-Deployment!#$
-      - H2_CONSOLE_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - backend_data:/app/data
       - ./logs:/app/logs
@@ -68,6 +75,57 @@ services:
       retries: 3
       start_period: 60s
 
+  # PostgreSQL Database (Low Memory)
+  postgres:
+    image: postgres:15-alpine
+    container_name: friendlyi-postgres-lowmem
+    environment:
+      POSTGRES_DB: friendlyi
+      POSTGRES_USER: friendlyi
+      POSTGRES_PASSWORD: friendlyi123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friendlyi -d friendlyi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    command: postgres -c shared_buffers=32MB -c effective_cache_size=64MB -c work_mem=2MB
+
+  # Redis Cache (Low Memory)
+  redis:
+    image: redis:7-alpine
+    container_name: friendlyi-redis-lowmem
+    ports:
+      - "6379:6379"
+    networks:
+      - friendlyi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+    command: redis-server --maxmemory 48mb --maxmemory-policy allkeys-lru
+
 networks:
   friendlyi-network:
     driver: bridge
@@ -75,4 +133,6 @@ networks:
 
 volumes:
   backend_data:
+    driver: local
+  postgres_data:
     driver: local

@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import ReservationsPage from './pages/ReservationsPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
+import MembersPage from './pages/MembersPage';
 import SecurityTestPage from './pages/SecurityTestPage';
 import './App.css';
 
@@ -54,6 +55,13 @@ const AppContent: React.FC = () => {
                 <Route path="/profile/edit" element={
                   <ProtectedRoute>
                     <EditProfilePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/members" element={
+                  <ProtectedRoute>
+                    <RouteGuard config={{ requireAuth: true, requireAdmin: true }}>
+                      <MembersPage />
+                    </RouteGuard>
                   </ProtectedRoute>
                 } />
                 <Route path="/security-test" element={

@@ -39,6 +39,16 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
               )}
+              {user?.grade === 'ROOSTER' && (
+                <li>
+                  <Link 
+                    to="/members" 
+                    className={`nav-link ${location.pathname === '/members' ? 'active' : ''}`}
+                  >
+                    회원관리
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link 
                   to="/reservations" 

@@ -20,21 +20,10 @@ const Navbar: React.FC = () => {
 
   // 메뉴 생성 함수
   const renderNavMenu = () => {
-    const commonMenus = [
-      { path: '/', label: '🏠 홈', isHome: true },
-      { path: '/profile', label: '👤 내 정보' }
-    ];
-
     if (isAdminPage && isAdmin) {
-      // 관리자 페이지에서는 관리자 메뉴 전체 표시
+      // 관리자 페이지에서는 관리자 메뉴만 표시
       return (
         <>
-          <li>
-            <Link to="/" className="nav-link">🏠 홈</Link>
-          </li>
-          <li className="nav-divider">
-            <span className="nav-section-title">관리자 메뉴</span>
-          </li>
           <li>
             <Link 
               to="/admin" 
@@ -58,9 +47,6 @@ const Navbar: React.FC = () => {
             >
               📅 예약관리
             </Link>
-          </li>
-          <li>
-            <Link to="/profile" className="nav-link">👤 내 정보</Link>
           </li>
         </>
       );
